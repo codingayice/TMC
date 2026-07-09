@@ -36,6 +36,7 @@
         <jackson.version>2.17.0</jackson.version>
         <commons-lang3.version>3.14.0</commons-lang3.version>
         <guava.version>33.2.1-jre</guava.version>
+        <lombok.version>1.18.34</lombok.version>
 
         <junit.jupiter.version>5.10.2</junit.jupiter.version>
         <mockito.version>5.11.0</mockito.version>
@@ -130,6 +131,13 @@
                 <version>${guava.version}</version>
             </dependency>
 
+            <!-- Code generation -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+
             <!-- Test -->
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
@@ -180,6 +188,13 @@
                         <source>${java.version}</source>
                         <target>${java.version}</target>
                         <encoding>${project.build.sourceEncoding}</encoding>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
                     </configuration>
                 </plugin>
 

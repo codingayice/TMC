@@ -33,6 +33,13 @@
             <artifactId>commons-lang3</artifactId>
         </dependency>
 
+        <!-- Code generation -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

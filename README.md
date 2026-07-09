@@ -83,3 +83,4 @@ mvn test
 - [Project PRD](docs/00-prd.md)
 - [Phase 1 Engineering Foundation](docs/01-工程骨架设计.md)
 - [Server Infrastructure](docs/02-服务器基础设施说明.md)
+- [Phase 2 Common Models and Protocol](docs/03-公共模型与协议设计.md)
