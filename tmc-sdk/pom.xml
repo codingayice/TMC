@@ -1,0 +1,33 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.tmc</groupId>
+        <artifactId>tmc-parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+    <artifactId>tmc-sdk</artifactId>
+    <name>TMC SDK</name>
+    <description>Hermes-SDK：热点探测 + 本地缓存客户端，基于 Jedis 改造实现透明接入</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.tmc</groupId>
+            <artifactId>tmc-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- Jedis (provided, 由接入方提供) -->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- 日志 -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <!-- JackRabbit rsyslog 客户端 (可用 logback 替代) -->
+    </dependencies>
+</project>
