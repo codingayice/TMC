@@ -14,20 +14,32 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>tmc-common</artifactId>
+    <artifactId>tmc-benchmark</artifactId>
     <packaging>jar</packaging>
 
-    <name>tmc-common</name>
-    <description>TMC 公共模块：通用模型、常量、配置与工具类</description>
+    <name>tmc-benchmark</name>
+    <description>TMC 基准测试与压力测试模块</description>
 
     <dependencies>
-        <!-- JSON serialization -->
+        <!-- Common models -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
+            <groupId>cn.ayice.tmc</groupId>
+            <artifactId>tmc-common</artifactId>
         </dependency>
 
-        <!-- Common utilities -->
+        <!-- Jedis for direct Redis pressure testing -->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+        </dependency>
+
+        <!-- HTTP client for pressure testing demo endpoints -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <!-- Optional local benchmark utilities -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
@@ -37,12 +49,6 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

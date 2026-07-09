@@ -14,14 +14,20 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>tmc-server</artifactId>
+    <artifactId>tmc-demo</artifactId>
     <packaging>jar</packaging>
 
-    <name>tmc-server</name>
-    <description>TMC 热点 Key 检测服务端</description>
+    <name>tmc-demo</name>
+    <description>TMC 演示应用</description>
 
     <dependencies>
-        <!-- Internal common module -->
+        <!-- TMC Jedis integration -->
+        <dependency>
+            <groupId>cn.ayice.tmc</groupId>
+            <artifactId>tmc-jedis</artifactId>
+        </dependency>
+
+        <!-- Common models -->
         <dependency>
             <groupId>cn.ayice.tmc</groupId>
             <artifactId>tmc-common</artifactId>
@@ -33,31 +39,13 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Validation -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-
-        <!-- Actuator for health and metrics -->
+        <!-- Actuator -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- Prometheus registry -->
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
-        </dependency>
-
-        <!-- etcd client -->
-        <dependency>
-            <groupId>io.etcd</groupId>
-            <artifactId>jetcd-core</artifactId>
-        </dependency>
-
-        <!-- Redis client, optional if server uses Redis ZSet for ranking later -->
+        <!-- Jedis, can be removed later if tmc-jedis shades or wraps it fully -->
         <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
@@ -85,7 +73,7 @@
 
     <build>
         <plugins>
-            <!-- Make tmc-server executable -->
+            <!-- Make tmc-demo executable -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

@@ -14,23 +14,41 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>tmc-common</artifactId>
+    <artifactId>tmc-jedis</artifactId>
     <packaging>jar</packaging>
 
-    <name>tmc-common</name>
-    <description>TMC 公共模块：通用模型、常量、配置与工具类</description>
+    <name>tmc-jedis</name>
+    <description>TMC Jedis 透明集成模块</description>
 
     <dependencies>
-        <!-- JSON serialization -->
+        <!-- Internal modules -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
+            <groupId>cn.ayice.tmc</groupId>
+            <artifactId>tmc-common</artifactId>
         </dependency>
 
-        <!-- Common utilities -->
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
+            <groupId>cn.ayice.tmc</groupId>
+            <artifactId>tmc-sdk</artifactId>
+        </dependency>
+
+        <!-- Jedis client -->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+        </dependency>
+
+        <!-- Spring Boot auto configuration support, optional -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <!-- Test -->
