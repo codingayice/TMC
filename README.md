@@ -85,3 +85,4 @@ mvn test
 - [Server Infrastructure](docs/02-服务器基础设施说明.md)
 - [Phase 2 Common Models and Protocol](docs/03-公共模型与协议设计.md)
 - [Phase 3 SDK Local Cache Core](docs/04-SDK本地缓存核心设计.md)
+- [Phase 4 Jedis Integration Layer](docs/05-Jedis接入层设计.md)
