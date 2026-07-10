@@ -1,18 +1,14 @@
-package cn.ayice.tmc.autoconfigure;
+package cn.ayice.tmc.sdk;
 
-import cn.ayice.tmc.cache.CaffeineLocalCache;
-import cn.ayice.tmc.cache.LocalCache;
-import cn.ayice.tmc.config.TmcProperties;
-import cn.ayice.tmc.core.TmcClient;
+import cn.ayice.tmc.communication.AccessReporter;
+import cn.ayice.tmc.hotkey.CaffeineLocalCache;
 import cn.ayice.tmc.hotkey.HotKeyManager;
-import cn.ayice.tmc.metrics.TmcMetrics;
-import cn.ayice.tmc.remote.RemoteCacheClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.ObjectProvider;
 
 @AutoConfiguration
 @EnableConfigurationProperties(TmcProperties.class)
@@ -21,7 +17,7 @@ public class TmcAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public LocalCache localCache(TmcProperties properties) {
+    public CaffeineLocalCache localCache(TmcProperties properties) {
         return new CaffeineLocalCache(
                 properties.getLocalCache().getMaximumSize(),
                 properties.getLocalCache().getExpireAfterWriteMillis()
@@ -42,15 +38,21 @@ public class TmcAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(RemoteCacheClient.class)
+    @ConditionalOnMissingBean
+    @ConditionalOnProperty(prefix = "tmc.report", name = "enabled", havingValue = "true", matchIfMissing = true)
+    public AccessReporter accessReporter(TmcProperties properties, TmcMetrics tmcMetrics) {
+        return new AccessReporter(properties.getReport(), tmcMetrics);
+    }
+
+    @Bean
     @ConditionalOnMissingBean
     public TmcClient tmcClient(
             TmcProperties properties,
-            RemoteCacheClient remoteCacheClient,
             HotKeyManager hotKeyManager,
-            LocalCache localCache,
-            TmcMetrics tmcMetrics
+            CaffeineLocalCache localCache,
+            TmcMetrics tmcMetrics,
+            ObjectProvider<AccessReporter> accessReporter
     ) {
-        return new TmcClient(properties, remoteCacheClient, hotKeyManager, localCache, tmcMetrics);
+        return new TmcClient(properties, hotKeyManager, localCache, tmcMetrics, accessReporter.getIfAvailable());
     }
 }

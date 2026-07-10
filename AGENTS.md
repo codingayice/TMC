@@ -20,6 +20,11 @@ All future development, architecture decisions, documentation, tests, demos, and
 
 When implementation details are not explicitly specified by the article, prefer choices that preserve the article's architecture and learning value over shortcuts that hide the core design.
 
+Architecture rule:
+
+- Do not create a Java `interface` for a component that is expected to have only one implementation. Use the concrete class directly.
+- Introduce an `interface` only when it represents a real extension boundary with multiple expected runtime implementations.
+
 <!-- CODEGRAPH_START -->
 ## CodeGraph
 

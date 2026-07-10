@@ -1,6 +1,6 @@
 package cn.ayice.tmc.jedis;
 
-import cn.ayice.tmc.core.TmcClient;
+import cn.ayice.tmc.sdk.TmcClient;
 import redis.clients.jedis.Jedis;
 
 public class TmcJedis {
@@ -20,7 +20,7 @@ public class TmcJedis {
     }
 
     public String get(String key) {
-        return tmcClient.get(key);
+        return tmcClient.get(key, () -> jedis.get(key));
     }
 
     public String set(String key, String value) {

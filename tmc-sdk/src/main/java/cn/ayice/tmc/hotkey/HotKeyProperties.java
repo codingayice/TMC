@@ -1,7 +1,10 @@
-package cn.ayice.tmc.config;
+package cn.ayice.tmc.hotkey;
 
 public class HotKeyProperties {
 
+    /**
+     * 本地热key过期时间
+     */
     private long ttlMillis = 30_000;
 
     public long getTtlMillis() {

@@ -1,4 +1,4 @@
-package cn.ayice.tmc.metrics;
+package cn.ayice.tmc.sdk;
 
 import java.util.concurrent.atomic.LongAdder;
 
@@ -8,8 +8,12 @@ public class TmcMetrics {
     private final LongAdder hotKeyGets = new LongAdder();
     private final LongAdder localCacheHits = new LongAdder();
     private final LongAdder localCacheMisses = new LongAdder();
-    private final LongAdder remoteGets = new LongAdder();
+    private final LongAdder redisGets = new LongAdder();
     private final LongAdder fallbackGets = new LongAdder();
+    private final LongAdder reportQueued = new LongAdder();
+    private final LongAdder reportDropped = new LongAdder();
+    private final LongAdder reportSucceeded = new LongAdder();
+    private final LongAdder reportFailed = new LongAdder();
 
     public void incrementTotalGets() {
         totalGets.increment();
@@ -27,12 +31,28 @@ public class TmcMetrics {
         localCacheMisses.increment();
     }
 
-    public void incrementRemoteGets() {
-        remoteGets.increment();
+    public void incrementRedisGets() {
+        redisGets.increment();
     }
 
     public void incrementFallbackGets() {
         fallbackGets.increment();
+    }
+
+    public void incrementReportQueued() {
+        reportQueued.increment();
+    }
+
+    public void incrementReportDropped() {
+        reportDropped.increment();
+    }
+
+    public void incrementReportSucceeded(long count) {
+        reportSucceeded.add(count);
+    }
+
+    public void incrementReportFailed(long count) {
+        reportFailed.add(count);
     }
 
     public TmcMetricsSnapshot snapshot() {
@@ -41,8 +61,12 @@ public class TmcMetrics {
                 hotKeyGets.sum(),
                 localCacheHits.sum(),
                 localCacheMisses.sum(),
-                remoteGets.sum(),
-                fallbackGets.sum()
+                redisGets.sum(),
+                fallbackGets.sum(),
+                reportQueued.sum(),
+                reportDropped.sum(),
+                reportSucceeded.sum(),
+                reportFailed.sum()
         );
     }
 }

@@ -1,11 +1,20 @@
-package cn.ayice.tmc.config;
+package cn.ayice.tmc.hotkey;
 
 public class LocalCacheProperties {
 
+    /**
+     * 是否启用本地缓存
+     */
     private boolean enabled = true;
 
+    /**
+     * 本地缓存最多能放多少key
+     */
     private long maximumSize = 10_000;
 
+    /**
+     * 本地缓存value写入后多久过期
+     */
     private long expireAfterWriteMillis = 30_000;
 
     public boolean isEnabled() {

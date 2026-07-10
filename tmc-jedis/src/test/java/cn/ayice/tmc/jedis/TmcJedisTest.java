@@ -7,8 +7,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
-import cn.ayice.tmc.core.TmcClient;
+import cn.ayice.tmc.sdk.TmcClient;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
 
@@ -18,14 +21,31 @@ class TmcJedisTest {
     void shouldReadThroughTmcClient() {
         Jedis jedis = mock(Jedis.class);
         TmcClient tmcClient = mock(TmcClient.class);
-        when(tmcClient.get("product:1")).thenReturn("cached-value");
+        when(tmcClient.get(eq("product:1"), any())).thenReturn("cached-value");
         TmcJedis tmcJedis = new TmcJedis(jedis, tmcClient);
 
         String value = tmcJedis.get("product:1");
 
         assertEquals("cached-value", value);
-        verify(tmcClient).get("product:1");
+        verify(tmcClient).get(eq("product:1"), any());
         verify(jedis, never()).get("product:1");
+    }
+
+    @Test
+    void shouldPassJedisGetToTmcClient() {
+        Jedis jedis = mock(Jedis.class);
+        TmcClient tmcClient = mock(TmcClient.class);
+        when(jedis.get("product:1")).thenReturn("jedis-value");
+        when(tmcClient.get(eq("product:1"), any())).thenAnswer(invocation -> {
+            Supplier<String> jedisGetter = invocation.getArgument(1);
+            return jedisGetter.get();
+        });
+        TmcJedis tmcJedis = new TmcJedis(jedis, tmcClient);
+
+        String value = tmcJedis.get("product:1");
+
+        assertEquals("jedis-value", value);
+        verify(jedis).get("product:1");
     }
 
     @Test

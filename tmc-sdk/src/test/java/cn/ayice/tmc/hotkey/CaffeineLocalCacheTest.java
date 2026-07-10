@@ -1,4 +1,4 @@
-package cn.ayice.tmc.cache;
+package cn.ayice.tmc.hotkey;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

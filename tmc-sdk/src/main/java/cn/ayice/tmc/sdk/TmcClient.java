@@ -1,42 +1,54 @@
-package cn.ayice.tmc.core;
+package cn.ayice.tmc.sdk;
 
-import cn.ayice.tmc.cache.LocalCache;
-import cn.ayice.tmc.config.TmcProperties;
+import cn.ayice.tmc.communication.AccessReporter;
+import cn.ayice.tmc.constant.TmcConstants;
+import cn.ayice.tmc.enums.CacheOperation;
 import cn.ayice.tmc.hotkey.HotKeyManager;
-import cn.ayice.tmc.metrics.TmcMetrics;
-import cn.ayice.tmc.metrics.TmcMetricsSnapshot;
+import cn.ayice.tmc.hotkey.CaffeineLocalCache;
+import cn.ayice.tmc.model.AccessEvent;
 import cn.ayice.tmc.model.HotKey;
-import cn.ayice.tmc.remote.RemoteCacheClient;
+import java.util.function.Supplier;
 
 public class TmcClient {
 
     private final TmcProperties properties;
-    private final RemoteCacheClient remoteCacheClient;
     private final HotKeyManager hotKeyManager;
-    private final LocalCache localCache;
+    private final CaffeineLocalCache localCache;
     private final TmcMetrics metrics;
+    private final AccessReporter accessReporter;
 
     public TmcClient(
             TmcProperties properties,
-            RemoteCacheClient remoteCacheClient,
             HotKeyManager hotKeyManager,
-            LocalCache localCache,
+            CaffeineLocalCache localCache,
             TmcMetrics metrics
+    ) {
+        this(properties, hotKeyManager, localCache, metrics, null);
+    }
+
+    public TmcClient(
+            TmcProperties properties,
+            HotKeyManager hotKeyManager,
+            CaffeineLocalCache localCache,
+            TmcMetrics metrics,
+            AccessReporter accessReporter
     ) {
         this.properties = requireNonNull(properties, "properties");
         this.properties.validate();
-        this.remoteCacheClient = requireNonNull(remoteCacheClient, "remoteCacheClient");
         this.hotKeyManager = requireNonNull(hotKeyManager, "hotKeyManager");
         this.localCache = requireNonNull(localCache, "localCache");
         this.metrics = requireNonNull(metrics, "metrics");
+        this.accessReporter = accessReporter;
     }
 
-    public String get(String key) {
+    public String get(String key, Supplier<String> jedisGetter) {
+        requireNonNull(jedisGetter, "jedisGetter");
         incrementSafely(metrics::incrementTotalGets);
+        reportAccessEvent(key);
 
         // 本地缓存未启用时，直接请求 Redis
         if (!properties.getLocalCache().isEnabled()) {
-            return getFromRemote(key);
+            return getFromJedis(jedisGetter);
         }
 
         /**
@@ -53,11 +65,11 @@ public class TmcClient {
             hotKey = hotKeyManager.isHotKey(key);
         } catch (RuntimeException e) {
             incrementSafely(metrics::incrementFallbackGets);
-            return getFromRemote(key);
+            return getFromJedis(jedisGetter);
         }
 
         if (!hotKey) {
-            return getFromRemote(key);
+            return getFromJedis(jedisGetter);
         }
 
         incrementSafely(metrics::incrementHotKeyGets);
@@ -66,7 +78,7 @@ public class TmcClient {
             localValue = localCache.getIfPresent(key);
         } catch (RuntimeException e) {
             incrementSafely(metrics::incrementFallbackGets);
-            return getFromRemote(key);
+            return getFromJedis(jedisGetter);
         }
 
         if (localValue != null) {
@@ -75,15 +87,15 @@ public class TmcClient {
         }
 
         incrementSafely(metrics::incrementLocalCacheMisses);
-        String remoteValue = getFromRemote(key);
-        if (remoteValue != null) {
+        String jedisValue = getFromJedis(jedisGetter);
+        if (jedisValue != null) {
             try {
-                localCache.put(key, remoteValue);
+                localCache.put(key, jedisValue);
             } catch (RuntimeException e) {
                 incrementSafely(metrics::incrementFallbackGets);
             }
         }
-        return remoteValue;
+        return jedisValue;
     }
 
     public void addHotKey(HotKey hotKey) {
@@ -102,9 +114,27 @@ public class TmcClient {
         return metrics.snapshot();
     }
 
-    private String getFromRemote(String key) {
-        incrementSafely(metrics::incrementRemoteGets);
-        return remoteCacheClient.get(key);
+    private String getFromJedis(Supplier<String> jedisGetter) {
+        incrementSafely(metrics::incrementRedisGets);
+        return jedisGetter.get();
+    }
+
+    private void reportAccessEvent(String key) {
+        if (accessReporter == null || !properties.getReport().isEnabled()) {
+            return;
+        }
+        try {
+            accessReporter.report(new AccessEvent(
+                    properties.getAppName(),
+                    key,
+                    System.currentTimeMillis(),
+                    TmcConstants.ACCESS_EVENT_WEIGHT,
+                    properties.getClientId(),
+                    CacheOperation.GET
+            ));
+        } catch (RuntimeException e) {
+            incrementSafely(() -> metrics.incrementReportFailed(1));
+        }
     }
 
     /**

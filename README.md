@@ -1,69 +1,69 @@
 # TMC
 
-TMC is a learning-oriented reproduction of Youzan's Transparent Multilevel Cache design.
+TMC 是一个基于有赞技术文章《透明多级缓存解决方案 TMC》实现的透明多级缓存项目。
 
-Reference article:
+原文链接：
 
 - https://tech.youzan.com/tmc/
 
-The project follows the article's main chain:
+项目按照原文中的核心链路进行实现：
 
 ```text
 TmcJedis
   -> TmcClient
-  -> Local Caffeine Cache
+  -> 本地 Caffeine 缓存
   -> Redis
   -> rsyslog
   -> Kafka
   -> tmc-server
-  -> Sliding Window Detector
+  -> 滑动窗口热点探测
   -> etcd
-  -> SDK hot key watch
+  -> SDK 热点 key 监听
 ```
 
-## Modules
+## 模块说明
 
-| Module | Responsibility |
+| 模块 | 职责 |
 |---|---|
-| `tmc-common` | Shared models, constants, protocol definitions, and utilities. |
-| `tmc-sdk` | Client-side hot key management, local cache, reporting, etcd watch, invalidation, and metrics. |
-| `tmc-jedis` | Jedis-style integration layer that routes Redis operations through TMC. |
-| `tmc-server` | Kafka access-event consumer, sliding-window hot key detector, and etcd publisher. |
-| `tmc-demo` | Demo business application for direct Redis and TMC access paths. |
-| `tmc-benchmark` | Benchmark scenarios for Redis pressure, hit rate, latency, and invalidation behavior. |
+| `tmc-common` | 公共模型、常量、协议定义和通用工具。 |
+| `tmc-sdk` | 客户端热点 key 管理、本地缓存、访问事件上报、etcd 监听、失效处理和指标统计。 |
+| `tmc-jedis` | Jedis 风格接入层，将 Redis 读写操作接入 TMC 链路。 |
+| `tmc-server` | Kafka 访问事件消费、滑动窗口热点探测和 etcd 热点结果发布。 |
+| `tmc-demo` | 演示应用，用于验证直连 Redis 与 TMC 访问链路。 |
+| `tmc-benchmark` | 压测模块，用于验证 Redis 压力、本地命中率、延迟和失效行为。 |
 
-## Local Requirements
+## 本地环境
 
 - Java 17
 - Maven 3.8+
 - Docker
 - Docker Compose
-- PowerShell 7+ recommended on Windows
+- Windows 环境建议使用 PowerShell 7+
 
-## Start Infrastructure
+## 启动基础设施
 
-From the project root:
+在项目根目录执行：
 
 ```powershell
 docker compose up -d
 ```
 
-The local infrastructure includes:
+本地基础设施包括：
 
-| Service | Port | Purpose |
+| 服务 | 端口 | 用途 |
 |---|---:|---|
-| Redis | `6379` | Remote cache storage |
-| etcd | `2379` | Hot key publishing and invalidation broadcast |
-| Kafka | `9092` | Access event message queue |
-| rsyslog | `5514` | SDK access event collection entry |
+| Redis | `6379` | 集中缓存存储 |
+| etcd | `2379` | 热点 key 下发和失效事件广播 |
+| Kafka | `9092` | 访问事件消息队列 |
+| rsyslog | `5514` | SDK 访问事件采集入口 |
 
-Kafka topic:
+Kafka topic：
 
 ```text
 tmc-access-events
 ```
 
-## Smoke Check
+## 环境检查
 
 ```powershell
 ./scripts/check-env.ps1
@@ -71,18 +71,19 @@ docker compose up -d
 ./scripts/smoke-infra.ps1
 ```
 
-## Build
+## 构建与测试
 
 ```powershell
 mvn -DskipTests compile
 mvn test
 ```
 
-## Documentation
+## 文档
 
-- [Project PRD](docs/00-prd.md)
-- [Phase 1 Engineering Foundation](docs/01-工程骨架设计.md)
-- [Server Infrastructure](docs/02-服务器基础设施说明.md)
-- [Phase 2 Common Models and Protocol](docs/03-公共模型与协议设计.md)
-- [Phase 3 SDK Local Cache Core](docs/04-SDK本地缓存核心设计.md)
-- [Phase 4 Jedis Integration Layer](docs/05-Jedis接入层设计.md)
+- [项目 PRD](docs/00-prd.md)
+- [Phase 1：工程基础与本地环境](docs/01-工程骨架设计.md)
+- [服务器基础设施说明](docs/02-服务器基础设施说明.md)
+- [Phase 2：公共模型与协议](docs/03-公共模型与协议设计.md)
+- [Phase 3：SDK 本地缓存核心](docs/04-SDK本地缓存核心设计.md)
+- [Phase 4：Jedis 接入层](docs/05-Jedis接入层设计.md)
+- [Phase 5：SDK 访问事件采集](docs/06-SDK访问事件采集设计.md)
