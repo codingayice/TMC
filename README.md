@@ -71,6 +71,15 @@ docker compose up -d
 ./scripts/smoke-infra.ps1
 ```
 
+双服务器部署时，可以使用远端模式验证应用服务器 rsyslog 到 Kafka 服务器的链路：
+
+```powershell
+./scripts/smoke-infra.ps1 `
+  -Mode Remote `
+  -AppHost <app-host> `
+  -KafkaHost <kafka-host>
+```
+
 ## 构建与测试
 
 ```powershell
@@ -87,3 +96,4 @@ mvn test
 - [Phase 3：SDK 本地缓存核心](docs/04-SDK本地缓存核心设计.md)
 - [Phase 4：Jedis 接入层](docs/05-Jedis接入层设计.md)
 - [Phase 5：SDK 访问事件采集](docs/06-SDK访问事件采集设计.md)
+- [Phase 6：rsyslog 到 Kafka 链路验证](docs/07-rsyslog到Kafka链路验证设计.md)
