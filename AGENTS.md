@@ -25,6 +25,15 @@ Architecture rule:
 - Do not create a Java `interface` for a component that is expected to have only one implementation. Use the concrete class directly.
 - Introduce an `interface` only when it represents a real extension boundary with multiple expected runtime implementations.
 
+Code comment rule:
+
+- All production code must include readable, complete comments that help a new maintainer understand the component without relying on chat history.
+- Every Java class should have a class-level comment explaining its responsibility, where it sits in the TMC chain, and any important design constraints.
+- Important fields, configuration properties, public methods, scheduled tasks, background threads, queues, network I/O, cache behavior, and concurrency boundaries must be commented.
+- Comments should explain intent, data flow, failure behavior, and non-obvious tradeoffs. Do not write empty line-by-line narration such as "set value" or "return result".
+- Test classes should include comments describing the behavior being protected, especially when the test documents a design decision or edge case.
+- When adding or changing code, update nearby comments so they remain accurate.
+
 <!-- CODEGRAPH_START -->
 ## CodeGraph
 

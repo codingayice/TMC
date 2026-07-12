@@ -5,6 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.Test;
 
+/**
+ * CaffeineLocalCache 本地缓存测试。
+ *
+ * <p>保障热点 key 缓存的基础读写、容量限制和过期行为符合 SDK 读路径预期。</p>
+ */
 class CaffeineLocalCacheTest {
 
     @Test

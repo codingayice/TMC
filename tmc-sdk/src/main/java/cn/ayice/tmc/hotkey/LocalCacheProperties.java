@@ -1,19 +1,24 @@
 package cn.ayice.tmc.hotkey;
 
+/**
+ * SDK 本地缓存配置。
+ *
+ * <p>本地缓存只缓存热点 key 的值，用来降低 Redis 压力。</p>
+ */
 public class LocalCacheProperties {
 
     /**
-     * 是否启用本地缓存
+     * 是否启用本地缓存。
      */
     private boolean enabled = true;
 
     /**
-     * 本地缓存最多能放多少key
+     * 本地缓存最多能放多少 key。
      */
     private long maximumSize = 10_000;
 
     /**
-     * 本地缓存value写入后多久过期
+     * 本地缓存 value 写入后多久过期。
      */
     private long expireAfterWriteMillis = 30_000;
 

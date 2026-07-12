@@ -6,6 +6,12 @@ import cn.ayice.tmc.hotkey.LocalCacheProperties;
 import java.util.UUID;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * SDK 总配置，对应 {@code tmc.*}。
+ *
+ * <p>业务应用引入 SDK 后，通过 Spring Boot 配置这些参数即可初始化本地缓存、
+ * 热点管理器和访问事件上报组件。</p>
+ */
 @ConfigurationProperties(prefix = "tmc")
 public class TmcProperties {
 
@@ -98,6 +104,9 @@ public class TmcProperties {
         this.report = report;
     }
 
+    /**
+     * 校验 SDK 运行所需的最小配置。
+     */
     public void validate() {
         if (enabled && !hasText(appName)) {
             throw new IllegalArgumentException("appName must not be blank when TMC is enabled");

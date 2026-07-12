@@ -5,6 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * 本地缓存失效事件。
+ *
+ * <p>当某个客户端执行写操作时，需要通过 etcd 广播失效事件，其他客户端收到后删除本地缓存，
+ * 避免继续读取旧值。本阶段暂未实现广播链路，但模型先放在 common 中供 SDK/server 复用。</p>
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

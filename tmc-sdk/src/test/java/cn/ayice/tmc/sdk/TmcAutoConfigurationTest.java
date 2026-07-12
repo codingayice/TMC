@@ -6,6 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
+/**
+ * SDK 自动配置测试。
+ *
+ * <p>保障业务应用引入 starter 后可以按配置创建默认 Bean，同时尊重关闭开关。</p>
+ */
 class TmcAutoConfigurationTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()

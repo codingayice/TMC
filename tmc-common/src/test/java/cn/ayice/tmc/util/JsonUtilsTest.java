@@ -6,6 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
+/**
+ * JsonUtils 协议测试。
+ *
+ * <p>保障 SDK、rsyslog/Kafka 和 server 之间使用的 JSON/JSON line 编码规则一致。</p>
+ */
 class JsonUtilsTest {
 
     @Test

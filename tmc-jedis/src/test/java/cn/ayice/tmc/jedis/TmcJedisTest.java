@@ -15,6 +15,12 @@ import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
 
+/**
+ * TmcJedis 透明接入测试。
+ *
+ * <p>这些测试保护 Jedis 风格 API 与 TmcClient 的交互契约：
+ * 读请求走 TMC，写请求成功后触发本地缓存失效。</p>
+ */
 class TmcJedisTest {
 
     @Test

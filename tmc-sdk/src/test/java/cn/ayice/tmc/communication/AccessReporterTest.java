@@ -16,6 +16,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
+/**
+ * AccessReporter 异步上报测试。
+ *
+ * <p>保障访问事件能够被后台线程写成 JSON line，同时验证队列满时丢弃事件而不阻塞业务线程。</p>
+ */
 class AccessReporterTest {
 
     @Test

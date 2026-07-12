@@ -4,6 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
+/**
+ * TmcMetrics 指标测试。
+ *
+ * <p>保障 SDK 读路径和访问事件上报相关计数能被正确累计并形成快照。</p>
+ */
 class TmcMetricsTest {
 
     @Test

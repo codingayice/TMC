@@ -17,6 +17,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
+/**
+ * TmcClient 读路径测试。
+ *
+ * <p>这些测试覆盖热点判断、本地缓存命中/未命中、Redis 回源、降级和访问事件上报。</p>
+ */
 class TmcClientTest {
 
     @Test

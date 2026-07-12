@@ -6,7 +6,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * key 访问事件
+ * key 访问事件。
+ *
+ * <p>这是 SDK 上报到服务端的最小数据单元。SDK 在每次业务读取 key 时生成该事件，
+ * 通过 rsyslog + Kafka 进入 tmc-server，服务端再根据这些事件计算热点 key。</p>
  */
 @Data
 @NoArgsConstructor

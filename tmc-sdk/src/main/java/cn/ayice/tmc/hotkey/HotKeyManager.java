@@ -6,10 +6,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * SDK 侧热点 key 管理器。
+ *
+ * <p>服务端识别出的热点 key 会下发给 SDK，SDK 在本地维护一份带过期时间的集合。
+ * TmcClient 每次 get 都先查询这里：只有命中的 key 才会尝试走 Caffeine 本地缓存。</p>
+ */
 public class HotKeyManager {
 
+    /**
+     * 当前 SDK 所属应用，只接受同 app 的热点快照。
+     */
     private final String appName;
+
+    /**
+     * 服务端未提供 ttl 时使用的默认本地热点有效期。
+     */
     private final long defaultTtlMillis;
+
+    /**
+     * key -> 本地热点状态。
+     */
     private final Map<String, HotKeyState> hotKeys = new ConcurrentHashMap<>();
 
     public HotKeyManager(String appName, long defaultTtlMillis) {
@@ -23,6 +40,11 @@ public class HotKeyManager {
         this.defaultTtlMillis = defaultTtlMillis;
     }
 
+    /**
+     * 增加一个热点 key。
+     *
+     * <p>如果热点属于其他 app，直接忽略，避免不同业务应用之间互相污染本地缓存。</p>
+     */
     public void addHotKey(HotKey hotKey) {
         if (hotKey == null || isBlank(hotKey.getKey())) {
             return;
@@ -36,6 +58,11 @@ public class HotKeyManager {
         hotKeys.put(hotKey.getKey(), new HotKeyState(hotKey.getKey(), score, detectedAt, detectedAt + ttlMillis));
     }
 
+    /**
+     * 判断 key 当前是否为热点。
+     *
+     * <p>过期热点会在查询时顺手清理，避免后台线程维护额外清理任务。</p>
+     */
     public boolean isHotKey(String key) {
         HotKeyState state = hotKeys.get(key);
         if (state == null) {
@@ -48,10 +75,16 @@ public class HotKeyManager {
         return true;
     }
 
+    /**
+     * 主动移除热点 key。
+     */
     public void removeHotKey(String key) {
         hotKeys.remove(key);
     }
 
+    /**
+     * 使用服务端快照替换当前 app 的热点集合。
+     */
     public void updateHotKeySnapshot(HotKeySnapshot snapshot) {
         if (snapshot == null || !appName.equals(snapshot.getAppName())) {
             return;
@@ -66,16 +99,25 @@ public class HotKeyManager {
         }
     }
 
+    /**
+     * 返回当前未过期热点 key 数量。
+     */
     public int hotKeyCount() {
         clearExpiredHotKeys();
         return hotKeys.size();
     }
 
+    /**
+     * 清理已经过期的热点 key。
+     */
     private void clearExpiredHotKeys() {
         long now = System.currentTimeMillis();
         hotKeys.entrySet().removeIf(entry -> entry.getValue().isExpired(now));
     }
 
+    /**
+     * 服务端字段为空或非法时使用默认值，保证 SDK 侧不会因为单个字段异常崩掉。
+     */
     private static long positiveOrDefault(Long value, long defaultValue) {
         return value == null || value <= 0 ? defaultValue : value;
     }
@@ -84,11 +126,29 @@ public class HotKeyManager {
         return value == null || value.trim().isEmpty();
     }
 
+    /**
+     * 本地保存的热点状态。
+     */
     private static final class HotKeyState {
 
+        /**
+         * 热点 key。
+         */
         private final String key;
+
+        /**
+         * 服务端识别时的热度分数，当前阶段主要用于观察。
+         */
         private final long score;
+
+        /**
+         * 服务端识别出热点的时间。
+         */
         private final long detectedAt;
+
+        /**
+         * SDK 本地认为热点失效的时间点。
+         */
         private final long expireAt;
 
         private HotKeyState(String key, long score, long detectedAt, long expireAt) {
@@ -98,6 +158,9 @@ public class HotKeyManager {
             this.expireAt = expireAt;
         }
 
+        /**
+         * 判断热点状态是否过期。
+         */
         private boolean isExpired(long now) {
             return now >= expireAt;
         }

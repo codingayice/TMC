@@ -97,3 +97,4 @@ mvn test
 - [Phase 4：Jedis 接入层](docs/05-Jedis接入层设计.md)
 - [Phase 5：SDK 访问事件采集](docs/06-SDK访问事件采集设计.md)
 - [Phase 6：rsyslog 到 Kafka 链路验证](docs/07-rsyslog到Kafka链路验证设计.md)
+- [Phase 7：服务端热点发现](docs/08-服务端热点发现设计.md)

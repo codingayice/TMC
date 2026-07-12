@@ -12,6 +12,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
+/**
+ * TmcProperties 配置测试。
+ *
+ * <p>保障 SDK 必要配置校验生效，避免应用名等关键配置缺失时静默启动。</p>
+ */
 class TmcPropertiesTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()

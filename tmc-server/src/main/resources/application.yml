@@ -1,0 +1,14 @@
+tmc:
+  server:
+    kafka:
+      bootstrap-servers: localhost:9092
+      topic: tmc-access-events
+      group-id: tmc-hotkey-server
+      concurrency: 1
+    hot-key:
+      window-seconds: 30
+      bucket-seconds: 3
+      threshold: 100
+      top-n: 100
+      ttl-millis: 300000
+      mapping-interval-millis: 3000

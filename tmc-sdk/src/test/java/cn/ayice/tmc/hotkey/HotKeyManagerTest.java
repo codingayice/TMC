@@ -9,6 +9,11 @@ import cn.ayice.tmc.model.HotKeySnapshot;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
+/**
+ * HotKeyManager 热点集合测试。
+ *
+ * <p>保障 SDK 只接受当前 app 的热点 key，并能正确处理 TTL 过期和快照替换。</p>
+ */
 class HotKeyManagerTest {
 
     @Test

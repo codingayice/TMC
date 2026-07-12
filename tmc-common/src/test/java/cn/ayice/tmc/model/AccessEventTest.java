@@ -6,6 +6,11 @@ import cn.ayice.tmc.enums.CacheOperation;
 import cn.ayice.tmc.util.JsonUtils;
 import org.junit.jupiter.api.Test;
 
+/**
+ * AccessEvent 模型测试。
+ *
+ * <p>保障 SDK 上报到 Kafka 的访问事件字段可以被 JSON 正确序列化和反序列化。</p>
+ */
 class AccessEventTest {
 
     @Test
