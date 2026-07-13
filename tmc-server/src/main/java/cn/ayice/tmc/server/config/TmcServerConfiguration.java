@@ -1,11 +1,17 @@
 package cn.ayice.tmc.server.config;
 
 import cn.ayice.tmc.server.hotkey.HotKeyDetector;
+import cn.ayice.tmc.server.hotkey.HotKeyPublisher;
+import cn.ayice.tmc.server.metrics.TmcServerMetrics;
+import io.etcd.jetcd.Client;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -33,8 +39,40 @@ public class TmcServerConfiguration {
     }
 
     @Bean
+    public EtcdProperties serverEtcdProperties(TmcServerProperties properties) {
+        return properties.getEtcd();
+    }
+
+    @Bean
     public HotKeyDetector hotKeyDetector(HotKeyDetectProperties properties) {
         return new HotKeyDetector(properties);
+    }
+
+    /**
+     * 创建服务端 etcd client。
+     *
+     * <p>jetcd client 由 Spring 管理关闭。热点发布本身仍然通过 HotKeyPublisher 包装，
+     * 避免调度器直接依赖外部 I/O API。</p>
+     */
+    @Bean(destroyMethod = "close")
+    @ConditionalOnProperty(prefix = "tmc.server.etcd", name = "enabled", havingValue = "true", matchIfMissing = true)
+    public Client serverEtcdClient(EtcdProperties properties) {
+        return Client.builder()
+                .endpoints(properties.getEndpoints().toArray(new String[0]))
+                .connectTimeout(Duration.ofMillis(properties.getConnectTimeoutMillis()))
+                .build();
+    }
+
+    /**
+     * 创建热点快照发布器。
+     */
+    @Bean
+    public HotKeyPublisher hotKeyPublisher(
+            EtcdProperties properties,
+            TmcServerMetrics metrics,
+            ObjectProvider<Client> client
+    ) {
+        return new HotKeyPublisher(client.getIfAvailable(), properties, metrics);
     }
 
     /**

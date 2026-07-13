@@ -12,3 +12,9 @@ tmc:
       top-n: 100
       ttl-millis: 300000
       mapping-interval-millis: 3000
+    etcd:
+      enabled: true
+      endpoints:
+        - http://localhost:2379
+      connect-timeout-millis: 3000
+      hot-key-lease-ttl-seconds: 30

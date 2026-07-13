@@ -83,6 +83,17 @@ public class HotKeyManager {
     }
 
     /**
+     * 清空当前应用的全部热点 key。
+     *
+     * <p>服务端删除 etcd 热点快照，或发布空热点状态时，SDK 需要立即停止把旧 key
+     * 当作热点处理。该方法只清理热点标记，不直接清理 CaffeineLocalCache 中的数据，
+     * 后续读请求会因为热点标记不存在而回源 Redis。</p>
+     */
+    public void clearHotKeys() {
+        hotKeys.clear();
+    }
+
+    /**
      * 使用服务端快照替换当前 app 的热点集合。
      */
     public void updateHotKeySnapshot(HotKeySnapshot snapshot) {

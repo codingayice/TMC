@@ -1,9 +1,11 @@
 package cn.ayice.tmc.sdk;
 
 import cn.ayice.tmc.communication.AccessReporter;
+import cn.ayice.tmc.communication.HotKeyDiscoveryListener;
 import cn.ayice.tmc.hotkey.CaffeineLocalCache;
 import cn.ayice.tmc.hotkey.HotKeyManager;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -63,6 +65,35 @@ public class TmcAutoConfiguration {
     @ConditionalOnProperty(prefix = "tmc.report", name = "enabled", havingValue = "true", matchIfMissing = true)
     public AccessReporter accessReporter(TmcProperties properties, TmcMetrics tmcMetrics) {
         return new AccessReporter(properties.getReport(), tmcMetrics);
+    }
+
+    /**
+     * 创建热点发现监听器。
+     *
+     * <p>监听器属于通信模块，负责从 etcd 感知服务端发布的 HotKeySnapshot。
+     * 它只更新 HotKeyManager，不直接影响 TmcClient 的业务读线程。</p>
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnBean(HotKeyManager.class)
+    @ConditionalOnProperty(
+            prefix = "tmc.hot-key.discovery",
+            name = "enabled",
+            havingValue = "true",
+            matchIfMissing = true
+    )
+    public HotKeyDiscoveryListener hotKeyDiscoveryListener(
+            TmcProperties properties,
+            HotKeyManager hotKeyManager,
+            TmcMetrics tmcMetrics
+    ) {
+        return new HotKeyDiscoveryListener(
+                properties.getAppName(),
+                properties.getEtcd(),
+                properties.getHotKey().getDiscovery(),
+                hotKeyManager,
+                tmcMetrics
+        );
     }
 
     /**

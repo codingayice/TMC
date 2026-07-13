@@ -57,6 +57,31 @@ public class TmcMetricsSnapshot {
      */
     private final long reportFailed;
 
+    /**
+     * 成功应用热点快照的次数。
+     */
+    private final long hotKeySnapshotApplied;
+
+    /**
+     * 热点快照非法次数。
+     */
+    private final long hotKeySnapshotInvalid;
+
+    /**
+     * 热点快照删除事件处理次数。
+     */
+    private final long hotKeySnapshotDeleted;
+
+    /**
+     * 热点发现 watch 重连次数。
+     */
+    private final long hotKeyWatchReconnect;
+
+    /**
+     * 热点发现 watch 失败次数。
+     */
+    private final long hotKeyWatchFailed;
+
     public TmcMetricsSnapshot(
             long totalGets,
             long hotKeyGets,
@@ -67,7 +92,12 @@ public class TmcMetricsSnapshot {
             long reportQueued,
             long reportDropped,
             long reportSucceeded,
-            long reportFailed
+            long reportFailed,
+            long hotKeySnapshotApplied,
+            long hotKeySnapshotInvalid,
+            long hotKeySnapshotDeleted,
+            long hotKeyWatchReconnect,
+            long hotKeyWatchFailed
     ) {
         this.totalGets = totalGets;
         this.hotKeyGets = hotKeyGets;
@@ -79,6 +109,11 @@ public class TmcMetricsSnapshot {
         this.reportDropped = reportDropped;
         this.reportSucceeded = reportSucceeded;
         this.reportFailed = reportFailed;
+        this.hotKeySnapshotApplied = hotKeySnapshotApplied;
+        this.hotKeySnapshotInvalid = hotKeySnapshotInvalid;
+        this.hotKeySnapshotDeleted = hotKeySnapshotDeleted;
+        this.hotKeyWatchReconnect = hotKeyWatchReconnect;
+        this.hotKeyWatchFailed = hotKeyWatchFailed;
     }
 
     public long getTotalGets() {
@@ -119,5 +154,25 @@ public class TmcMetricsSnapshot {
 
     public long getReportFailed() {
         return reportFailed;
+    }
+
+    public long getHotKeySnapshotApplied() {
+        return hotKeySnapshotApplied;
+    }
+
+    public long getHotKeySnapshotInvalid() {
+        return hotKeySnapshotInvalid;
+    }
+
+    public long getHotKeySnapshotDeleted() {
+        return hotKeySnapshotDeleted;
+    }
+
+    public long getHotKeyWatchReconnect() {
+        return hotKeyWatchReconnect;
+    }
+
+    public long getHotKeyWatchFailed() {
+        return hotKeyWatchFailed;
     }
 }

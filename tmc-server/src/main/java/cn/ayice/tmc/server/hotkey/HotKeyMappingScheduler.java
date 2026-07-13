@@ -22,6 +22,7 @@ public class HotKeyMappingScheduler {
     private final AccessEventAccumulator accumulator;
     private final HotKeyDetector detector;
     private final HotKeySnapshotRepository repository;
+    private final HotKeyPublisher publisher;
     private final TmcServerMetrics metrics;
     private final HotKeyDetectProperties properties;
 
@@ -35,12 +36,14 @@ public class HotKeyMappingScheduler {
             AccessEventAccumulator accumulator,
             HotKeyDetector detector,
             HotKeySnapshotRepository repository,
+            HotKeyPublisher publisher,
             TmcServerMetrics metrics,
             HotKeyDetectProperties properties
     ) {
         this.accumulator = accumulator;
         this.detector = detector;
         this.repository = repository;
+        this.publisher = publisher;
         this.metrics = metrics;
         this.properties = properties;
     }
@@ -91,12 +94,14 @@ public class HotKeyMappingScheduler {
         if (wheelMap.isEmpty()) {
             wheelStore.remove(appName);
             repository.remove(appName);
+            publisher.delete(appName);
             metrics.setHotKeysDetected(0);
             return;
         }
 
         HotKeySnapshot snapshot = detector.detect(appName, wheelMap);
         repository.save(snapshot);
+        publisher.publish(snapshot);
         metrics.setHotKeysDetected(snapshot.getHotKeys().size());
     }
 

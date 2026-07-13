@@ -3,6 +3,7 @@ package cn.ayice.tmc.sdk;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import cn.ayice.tmc.communication.HotKeyDiscoveryListener;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
@@ -30,6 +31,20 @@ class TmcAutoConfigurationTest {
         contextRunner
                 .withPropertyValues("tmc.enabled=false")
                 .run(context -> assertTrue(context.getBeansOfType(TmcClient.class).isEmpty()));
+    }
+
+    @Test
+    void shouldCreateHotKeyDiscoveryListenerByDefault() {
+        contextRunner.run(context ->
+                assertNotNull(context.getBean(HotKeyDiscoveryListener.class))
+        );
+    }
+
+    @Test
+    void shouldNotCreateHotKeyDiscoveryListenerWhenDisabled() {
+        contextRunner
+                .withPropertyValues("tmc.hot-key.discovery.enabled=false")
+                .run(context -> assertTrue(context.getBeansOfType(HotKeyDiscoveryListener.class).isEmpty()));
     }
 
 }

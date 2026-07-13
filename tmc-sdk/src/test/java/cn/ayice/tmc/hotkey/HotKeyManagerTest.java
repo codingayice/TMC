@@ -58,4 +58,17 @@ class HotKeyManagerTest {
         assertTrue(manager.isHotKey("new"));
         assertEquals(1, manager.hotKeyCount());
     }
+
+    @Test
+    void shouldClearHotKeysWhenSnapshotIsDeleted() {
+        HotKeyManager manager = new HotKeyManager("product-service", 30_000);
+        manager.addHotKey(new HotKey("product-service", "product:1", 100L, System.currentTimeMillis(), 30_000L));
+        manager.addHotKey(new HotKey("product-service", "product:2", 100L, System.currentTimeMillis(), 30_000L));
+
+        manager.clearHotKeys();
+
+        assertFalse(manager.isHotKey("product:1"));
+        assertFalse(manager.isHotKey("product:2"));
+        assertEquals(0, manager.hotKeyCount());
+    }
 }

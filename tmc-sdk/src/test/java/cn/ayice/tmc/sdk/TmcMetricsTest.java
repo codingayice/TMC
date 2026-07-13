@@ -25,6 +25,11 @@ class TmcMetricsTest {
         assertEquals(0, snapshot.getReportDropped());
         assertEquals(0, snapshot.getReportSucceeded());
         assertEquals(0, snapshot.getReportFailed());
+        assertEquals(0, snapshot.getHotKeySnapshotApplied());
+        assertEquals(0, snapshot.getHotKeySnapshotInvalid());
+        assertEquals(0, snapshot.getHotKeySnapshotDeleted());
+        assertEquals(0, snapshot.getHotKeyWatchReconnect());
+        assertEquals(0, snapshot.getHotKeyWatchFailed());
     }
 
     @Test
@@ -41,6 +46,11 @@ class TmcMetricsTest {
         metrics.incrementReportDropped();
         metrics.incrementReportSucceeded(2);
         metrics.incrementReportFailed(3);
+        metrics.incrementHotKeySnapshotApplied();
+        metrics.incrementHotKeySnapshotInvalid();
+        metrics.incrementHotKeySnapshotDeleted();
+        metrics.incrementHotKeyWatchReconnect();
+        metrics.incrementHotKeyWatchFailed();
 
         TmcMetricsSnapshot snapshot = metrics.snapshot();
         assertEquals(1, snapshot.getTotalGets());
@@ -53,5 +63,10 @@ class TmcMetricsTest {
         assertEquals(1, snapshot.getReportDropped());
         assertEquals(2, snapshot.getReportSucceeded());
         assertEquals(3, snapshot.getReportFailed());
+        assertEquals(1, snapshot.getHotKeySnapshotApplied());
+        assertEquals(1, snapshot.getHotKeySnapshotInvalid());
+        assertEquals(1, snapshot.getHotKeySnapshotDeleted());
+        assertEquals(1, snapshot.getHotKeyWatchReconnect());
+        assertEquals(1, snapshot.getHotKeyWatchFailed());
     }
 }

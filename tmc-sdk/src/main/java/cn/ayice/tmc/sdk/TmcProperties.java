@@ -1,6 +1,7 @@
 package cn.ayice.tmc.sdk;
 
 import cn.ayice.tmc.communication.AccessReportProperties;
+import cn.ayice.tmc.communication.EtcdProperties;
 import cn.ayice.tmc.hotkey.HotKeyProperties;
 import cn.ayice.tmc.hotkey.LocalCacheProperties;
 import java.util.UUID;
@@ -36,14 +37,19 @@ public class TmcProperties {
     private LocalCacheProperties localCache = new LocalCacheProperties();
 
     /**
-     * 热key配置
+     * 热点 key 配置。
      */
     private HotKeyProperties hotKey = new HotKeyProperties();
 
     /**
-     * 事件上报配置
+     * 事件上报配置。
      */
     private AccessReportProperties report = new AccessReportProperties();
+
+    /**
+     * etcd 通信配置。
+     */
+    private EtcdProperties etcd = new EtcdProperties();
 
     public boolean isEnabled() {
         return enabled;
@@ -102,6 +108,17 @@ public class TmcProperties {
             throw new IllegalArgumentException("report must not be null");
         }
         this.report = report;
+    }
+
+    public EtcdProperties getEtcd() {
+        return etcd;
+    }
+
+    public void setEtcd(EtcdProperties etcd) {
+        if (etcd == null) {
+            throw new IllegalArgumentException("etcd must not be null");
+        }
+        this.etcd = etcd;
     }
 
     /**
