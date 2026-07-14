@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import cn.ayice.tmc.communication.HotKeyDiscoveryListener;
+import cn.ayice.tmc.communication.InvalidationListener;
+import cn.ayice.tmc.communication.InvalidationReporter;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
@@ -45,6 +47,44 @@ class TmcAutoConfigurationTest {
         contextRunner
                 .withPropertyValues("tmc.hot-key.discovery.enabled=false")
                 .run(context -> assertTrue(context.getBeansOfType(HotKeyDiscoveryListener.class).isEmpty()));
+    }
+
+    @Test
+    void shouldCreateInvalidationComponentsByDefault() {
+        contextRunner.run(context -> {
+            assertNotNull(context.getBean(InvalidationReporter.class));
+            assertNotNull(context.getBean(InvalidationListener.class));
+        });
+    }
+
+    @Test
+    void shouldNotCreateInvalidationComponentsWhenDisabled() {
+        contextRunner
+                .withPropertyValues("tmc.invalidation.enabled=false")
+                .run(context -> {
+                    assertTrue(context.getBeansOfType(InvalidationReporter.class).isEmpty());
+                    assertTrue(context.getBeansOfType(InvalidationListener.class).isEmpty());
+                });
+    }
+
+    @Test
+    void shouldDisableInvalidationReporterOnly() {
+        contextRunner
+                .withPropertyValues("tmc.invalidation.report-enabled=false")
+                .run(context -> {
+                    assertTrue(context.getBeansOfType(InvalidationReporter.class).isEmpty());
+                    assertNotNull(context.getBean(InvalidationListener.class));
+                });
+    }
+
+    @Test
+    void shouldDisableInvalidationListenerOnly() {
+        contextRunner
+                .withPropertyValues("tmc.invalidation.listen-enabled=false")
+                .run(context -> {
+                    assertNotNull(context.getBean(InvalidationReporter.class));
+                    assertTrue(context.getBeansOfType(InvalidationListener.class).isEmpty());
+                });
     }
 
 }

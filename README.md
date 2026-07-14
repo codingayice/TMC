@@ -99,3 +99,4 @@ mvn test
 - [Phase 6：rsyslog 到 Kafka 链路验证](docs/07-rsyslog到Kafka链路验证设计.md)
 - [Phase 7：服务端热点发现](docs/08-服务端热点发现设计.md)
 - [Phase 8：热点发布与发现监听](docs/09-热点发布与发现监听设计.md)
+- [Phase 9：本地缓存失效广播](docs/10-本地缓存失效广播设计.md)

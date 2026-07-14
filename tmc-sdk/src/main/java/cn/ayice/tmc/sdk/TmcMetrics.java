@@ -85,6 +85,46 @@ public class TmcMetrics {
      */
     private final LongAdder hotKeyWatchFailed = new LongAdder();
 
+    /**
+     * 当前节点主动删除本地缓存的次数。
+     */
+    private final LongAdder localInvalidations = new LongAdder();
+
+    /**
+     * 失效事件成功写入 etcd 的次数。
+     */
+    private final LongAdder invalidationReportSucceeded = new LongAdder();
+
+    /**
+     * 失效事件写入失败次数。
+     */
+    private final LongAdder invalidationReportFailed = new LongAdder();
+
+    /**
+     * 收到并处理其他节点失效事件的次数。
+     */
+    private final LongAdder invalidationReceived = new LongAdder();
+
+    /**
+     * 忽略自身失效事件的次数。
+     */
+    private final LongAdder invalidationSelfIgnored = new LongAdder();
+
+    /**
+     * 非法失效事件次数。
+     */
+    private final LongAdder invalidationInvalid = new LongAdder();
+
+    /**
+     * 失效事件 watch 重连次数。
+     */
+    private final LongAdder invalidationWatchReconnect = new LongAdder();
+
+    /**
+     * 失效事件 watch 启动或处理失败次数。
+     */
+    private final LongAdder invalidationWatchFailed = new LongAdder();
+
     public void incrementTotalGets() {
         totalGets.increment();
     }
@@ -145,6 +185,38 @@ public class TmcMetrics {
         hotKeyWatchFailed.increment();
     }
 
+    public void incrementLocalInvalidations() {
+        localInvalidations.increment();
+    }
+
+    public void incrementInvalidationReportSucceeded() {
+        invalidationReportSucceeded.increment();
+    }
+
+    public void incrementInvalidationReportFailed() {
+        invalidationReportFailed.increment();
+    }
+
+    public void incrementInvalidationReceived() {
+        invalidationReceived.increment();
+    }
+
+    public void incrementInvalidationSelfIgnored() {
+        invalidationSelfIgnored.increment();
+    }
+
+    public void incrementInvalidationInvalid() {
+        invalidationInvalid.increment();
+    }
+
+    public void incrementInvalidationWatchReconnect() {
+        invalidationWatchReconnect.increment();
+    }
+
+    public void incrementInvalidationWatchFailed() {
+        invalidationWatchFailed.increment();
+    }
+
     /**
      * 生成不可变指标快照，避免调用方直接持有 LongAdder。
      */
@@ -164,7 +236,15 @@ public class TmcMetrics {
                 hotKeySnapshotInvalid.sum(),
                 hotKeySnapshotDeleted.sum(),
                 hotKeyWatchReconnect.sum(),
-                hotKeyWatchFailed.sum()
+                hotKeyWatchFailed.sum(),
+                localInvalidations.sum(),
+                invalidationReportSucceeded.sum(),
+                invalidationReportFailed.sum(),
+                invalidationReceived.sum(),
+                invalidationSelfIgnored.sum(),
+                invalidationInvalid.sum(),
+                invalidationWatchReconnect.sum(),
+                invalidationWatchFailed.sum()
         );
     }
 }

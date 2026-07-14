@@ -2,6 +2,8 @@ package cn.ayice.tmc.sdk;
 
 import cn.ayice.tmc.communication.AccessReporter;
 import cn.ayice.tmc.communication.HotKeyDiscoveryListener;
+import cn.ayice.tmc.communication.InvalidationListener;
+import cn.ayice.tmc.communication.InvalidationReporter;
 import cn.ayice.tmc.hotkey.CaffeineLocalCache;
 import cn.ayice.tmc.hotkey.HotKeyManager;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -97,6 +99,59 @@ public class TmcAutoConfiguration {
     }
 
     /**
+     * 创建失效事件发布器。
+     *
+     * <p>写 Redis 成功后，TmcClient 会通过该组件把 InvalidationEvent 写入 etcd，
+     * 其他 SDK 节点监听到事件后删除自己的本地缓存。</p>
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnProperty(
+            prefix = "tmc.invalidation",
+            name = {"enabled", "report-enabled"},
+            havingValue = "true",
+            matchIfMissing = true
+    )
+    public InvalidationReporter invalidationReporter(TmcProperties properties, TmcMetrics tmcMetrics) {
+        return new InvalidationReporter(
+                properties.getAppName(),
+                properties.getClientId(),
+                properties.getEtcd(),
+                properties.getInvalidation(),
+                tmcMetrics
+        );
+    }
+
+    /**
+     * 创建失效事件监听器。
+     *
+     * <p>监听器只处理其他 clientId 发布的事件，避免当前节点重复处理自己刚刚删除过的缓存。</p>
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnBean(CaffeineLocalCache.class)
+    @ConditionalOnProperty(
+            prefix = "tmc.invalidation",
+            name = {"enabled", "listen-enabled"},
+            havingValue = "true",
+            matchIfMissing = true
+    )
+    public InvalidationListener invalidationListener(
+            TmcProperties properties,
+            CaffeineLocalCache localCache,
+            TmcMetrics tmcMetrics
+    ) {
+        return new InvalidationListener(
+                properties.getAppName(),
+                properties.getClientId(),
+                properties.getEtcd(),
+                properties.getInvalidation(),
+                localCache,
+                tmcMetrics
+        );
+    }
+
+    /**
      * 创建 SDK 核心客户端。
      *
      * <p>AccessReporter 使用 ObjectProvider 注入，是为了兼容上报关闭时 Bean 不存在的场景。</p>
@@ -108,8 +163,16 @@ public class TmcAutoConfiguration {
             HotKeyManager hotKeyManager,
             CaffeineLocalCache localCache,
             TmcMetrics tmcMetrics,
-            ObjectProvider<AccessReporter> accessReporter
+            ObjectProvider<AccessReporter> accessReporter,
+            ObjectProvider<InvalidationReporter> invalidationReporter
     ) {
-        return new TmcClient(properties, hotKeyManager, localCache, tmcMetrics, accessReporter.getIfAvailable());
+        return new TmcClient(
+                properties,
+                hotKeyManager,
+                localCache,
+                tmcMetrics,
+                accessReporter.getIfAvailable(),
+                invalidationReporter.getIfAvailable()
+        );
     }
 }

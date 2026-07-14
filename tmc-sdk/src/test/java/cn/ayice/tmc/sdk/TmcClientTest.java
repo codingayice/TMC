@@ -10,6 +10,9 @@ import cn.ayice.tmc.hotkey.HotKeyManager;
 import cn.ayice.tmc.hotkey.LocalCacheProperties;
 import cn.ayice.tmc.communication.AccessReportProperties;
 import cn.ayice.tmc.communication.AccessReporter;
+import cn.ayice.tmc.communication.InvalidationProperties;
+import cn.ayice.tmc.communication.InvalidationReporter;
+import cn.ayice.tmc.enums.CacheOperation;
 import cn.ayice.tmc.model.HotKey;
 import cn.ayice.tmc.model.AccessEvent;
 import java.util.Map;
@@ -123,6 +126,29 @@ class TmcClientTest {
         assertEquals(1, client.metrics().getReportFailed());
     }
 
+    @Test
+    void shouldInvalidateLocalCacheAndReportInvalidationAfterWrite() {
+        CountingInvalidationReporter reporter = new CountingInvalidationReporter();
+        TmcClient client = newClient(properties(), null, reporter);
+        client.addHotKey(new HotKey("product-service", "product:1", 100L, System.currentTimeMillis(), 30_000L));
+        client.get("product:1", () -> "old-value");
+
+        client.invalidateAfterWrite("product:1", CacheOperation.SET);
+
+        assertEquals(1, reporter.count.get());
+        assertEquals(CacheOperation.SET, reporter.operation);
+        assertEquals("new-value", client.get("product:1", () -> "new-value"));
+    }
+
+    @Test
+    void shouldIgnoreInvalidationReporterException() {
+        TmcClient client = newClient(properties(), null, new ThrowingInvalidationReporter());
+
+        client.invalidateAfterWrite("product:1", CacheOperation.SET);
+
+        assertEquals(1, client.metrics().getInvalidationReportFailed());
+    }
+
     private static TmcClient newClient() {
         return newClient(properties());
     }
@@ -132,6 +158,14 @@ class TmcClientTest {
     }
 
     private static TmcClient newClient(TmcProperties properties, AccessReporter reporter) {
+        return newClient(properties, reporter, null);
+    }
+
+    private static TmcClient newClient(
+            TmcProperties properties,
+            AccessReporter reporter,
+            InvalidationReporter invalidationReporter
+    ) {
         return new TmcClient(
                 properties,
                 new HotKeyManager(properties.getAppName(), properties.getHotKey().getTtlMillis()),
@@ -140,7 +174,8 @@ class TmcClientTest {
                         properties.getLocalCache().getExpireAfterWriteMillis()
                 ),
                 new TmcMetrics(),
-                reporter
+                reporter,
+                invalidationReporter
         );
     }
 
@@ -198,6 +233,32 @@ class TmcClientTest {
         @Override
         public void report(AccessEvent event) {
             throw new IllegalStateException("report failed");
+        }
+    }
+
+    private static final class CountingInvalidationReporter extends InvalidationReporter {
+        private final AtomicInteger count = new AtomicInteger();
+        private CacheOperation operation;
+
+        private CountingInvalidationReporter() {
+            super("product-service", "client-1", new InvalidationProperties(), new TmcMetrics());
+        }
+
+        @Override
+        public void report(String key, CacheOperation operation) {
+            count.incrementAndGet();
+            this.operation = operation;
+        }
+    }
+
+    private static final class ThrowingInvalidationReporter extends InvalidationReporter {
+        private ThrowingInvalidationReporter() {
+            super("product-service", "client-1", new InvalidationProperties(), new TmcMetrics());
+        }
+
+        @Override
+        public void report(String key, CacheOperation operation) {
+            throw new IllegalStateException("invalidation failed");
         }
     }
 

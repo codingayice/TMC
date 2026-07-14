@@ -1,5 +1,6 @@
 package cn.ayice.tmc.jedis;
 
+import cn.ayice.tmc.enums.CacheOperation;
 import cn.ayice.tmc.sdk.TmcClient;
 import redis.clients.jedis.Jedis;
 
@@ -48,7 +49,7 @@ public class TmcJedis {
     public String set(String key, String value) {
         String result = jedis.set(key, value);
         if ("OK".equals(result)) {
-            tmcClient.invalidate(key);
+            tmcClient.invalidateAfterWrite(key, CacheOperation.SET);
         }
         return result;
     }
@@ -59,7 +60,7 @@ public class TmcJedis {
     public Long del(String key) {
         Long deleted = jedis.del(key);
         if (deleted != null && deleted > 0) {
-            tmcClient.invalidate(key);
+            tmcClient.invalidateAfterWrite(key, CacheOperation.DEL);
         }
         return deleted;
     }
@@ -70,7 +71,7 @@ public class TmcJedis {
     public Long expire(String key, int seconds) {
         Long result = jedis.expire(key, seconds);
         if (result != null && result == 1) {
-            tmcClient.invalidate(key);
+            tmcClient.invalidateAfterWrite(key, CacheOperation.EXPIRE);
         }
         return result;
     }

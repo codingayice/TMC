@@ -30,6 +30,14 @@ class TmcMetricsTest {
         assertEquals(0, snapshot.getHotKeySnapshotDeleted());
         assertEquals(0, snapshot.getHotKeyWatchReconnect());
         assertEquals(0, snapshot.getHotKeyWatchFailed());
+        assertEquals(0, snapshot.getLocalInvalidations());
+        assertEquals(0, snapshot.getInvalidationReportSucceeded());
+        assertEquals(0, snapshot.getInvalidationReportFailed());
+        assertEquals(0, snapshot.getInvalidationReceived());
+        assertEquals(0, snapshot.getInvalidationSelfIgnored());
+        assertEquals(0, snapshot.getInvalidationInvalid());
+        assertEquals(0, snapshot.getInvalidationWatchReconnect());
+        assertEquals(0, snapshot.getInvalidationWatchFailed());
     }
 
     @Test
@@ -51,6 +59,14 @@ class TmcMetricsTest {
         metrics.incrementHotKeySnapshotDeleted();
         metrics.incrementHotKeyWatchReconnect();
         metrics.incrementHotKeyWatchFailed();
+        metrics.incrementLocalInvalidations();
+        metrics.incrementInvalidationReportSucceeded();
+        metrics.incrementInvalidationReportFailed();
+        metrics.incrementInvalidationReceived();
+        metrics.incrementInvalidationSelfIgnored();
+        metrics.incrementInvalidationInvalid();
+        metrics.incrementInvalidationWatchReconnect();
+        metrics.incrementInvalidationWatchFailed();
 
         TmcMetricsSnapshot snapshot = metrics.snapshot();
         assertEquals(1, snapshot.getTotalGets());
@@ -68,5 +84,13 @@ class TmcMetricsTest {
         assertEquals(1, snapshot.getHotKeySnapshotDeleted());
         assertEquals(1, snapshot.getHotKeyWatchReconnect());
         assertEquals(1, snapshot.getHotKeyWatchFailed());
+        assertEquals(1, snapshot.getLocalInvalidations());
+        assertEquals(1, snapshot.getInvalidationReportSucceeded());
+        assertEquals(1, snapshot.getInvalidationReportFailed());
+        assertEquals(1, snapshot.getInvalidationReceived());
+        assertEquals(1, snapshot.getInvalidationSelfIgnored());
+        assertEquals(1, snapshot.getInvalidationInvalid());
+        assertEquals(1, snapshot.getInvalidationWatchReconnect());
+        assertEquals(1, snapshot.getInvalidationWatchFailed());
     }
 }

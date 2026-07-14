@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
+import cn.ayice.tmc.enums.CacheOperation;
 import cn.ayice.tmc.sdk.TmcClient;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
@@ -64,7 +65,7 @@ class TmcJedisTest {
         String result = tmcJedis.set("product:1", "value-1");
 
         assertEquals("OK", result);
-        verify(tmcClient).invalidate("product:1");
+        verify(tmcClient).invalidateAfterWrite("product:1", CacheOperation.SET);
     }
 
     @Test
@@ -76,7 +77,7 @@ class TmcJedisTest {
 
         assertEquals("FAIL", tmcJedis.set("product:1", "value-1"));
 
-        verify(tmcClient, never()).invalidate("product:1");
+        verify(tmcClient, never()).invalidateAfterWrite(eq("product:1"), any());
     }
 
     @Test
@@ -89,7 +90,7 @@ class TmcJedisTest {
         Long result = tmcJedis.del("product:1");
 
         assertEquals(1L, result);
-        verify(tmcClient).invalidate("product:1");
+        verify(tmcClient).invalidateAfterWrite("product:1", CacheOperation.DEL);
     }
 
     @Test
@@ -101,7 +102,7 @@ class TmcJedisTest {
 
         assertEquals(0L, tmcJedis.del("product:1"));
 
-        verify(tmcClient, never()).invalidate("product:1");
+        verify(tmcClient, never()).invalidateAfterWrite(eq("product:1"), any());
     }
 
     @Test
@@ -114,7 +115,7 @@ class TmcJedisTest {
         Long result = tmcJedis.expire("product:1", 60);
 
         assertEquals(1L, result);
-        verify(tmcClient).invalidate("product:1");
+        verify(tmcClient).invalidateAfterWrite("product:1", CacheOperation.EXPIRE);
     }
 
     @Test
@@ -126,7 +127,7 @@ class TmcJedisTest {
 
         assertEquals(0L, tmcJedis.expire("product:1", 60));
 
-        verify(tmcClient, never()).invalidate("product:1");
+        verify(tmcClient, never()).invalidateAfterWrite(eq("product:1"), any());
     }
 
     @Test
@@ -140,6 +141,6 @@ class TmcJedisTest {
         RuntimeException thrown = assertThrows(RuntimeException.class, () -> tmcJedis.set("product:1", "value-1"));
 
         assertSame(exception, thrown);
-        verify(tmcClient, never()).invalidate("product:1");
+        verify(tmcClient, never()).invalidateAfterWrite(eq("product:1"), any());
     }
 }

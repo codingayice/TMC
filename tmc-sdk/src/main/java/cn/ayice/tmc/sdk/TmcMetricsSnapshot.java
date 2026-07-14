@@ -82,6 +82,46 @@ public class TmcMetricsSnapshot {
      */
     private final long hotKeyWatchFailed;
 
+    /**
+     * 当前节点主动删除本地缓存的次数。
+     */
+    private final long localInvalidations;
+
+    /**
+     * 失效事件写入 etcd 成功次数。
+     */
+    private final long invalidationReportSucceeded;
+
+    /**
+     * 失效事件写入 etcd 失败次数。
+     */
+    private final long invalidationReportFailed;
+
+    /**
+     * 收到并处理其他节点失效事件次数。
+     */
+    private final long invalidationReceived;
+
+    /**
+     * 忽略自身失效事件次数。
+     */
+    private final long invalidationSelfIgnored;
+
+    /**
+     * 非法失效事件次数。
+     */
+    private final long invalidationInvalid;
+
+    /**
+     * 失效事件 watch 重连次数。
+     */
+    private final long invalidationWatchReconnect;
+
+    /**
+     * 失效事件 watch 失败次数。
+     */
+    private final long invalidationWatchFailed;
+
     public TmcMetricsSnapshot(
             long totalGets,
             long hotKeyGets,
@@ -97,7 +137,15 @@ public class TmcMetricsSnapshot {
             long hotKeySnapshotInvalid,
             long hotKeySnapshotDeleted,
             long hotKeyWatchReconnect,
-            long hotKeyWatchFailed
+            long hotKeyWatchFailed,
+            long localInvalidations,
+            long invalidationReportSucceeded,
+            long invalidationReportFailed,
+            long invalidationReceived,
+            long invalidationSelfIgnored,
+            long invalidationInvalid,
+            long invalidationWatchReconnect,
+            long invalidationWatchFailed
     ) {
         this.totalGets = totalGets;
         this.hotKeyGets = hotKeyGets;
@@ -114,6 +162,14 @@ public class TmcMetricsSnapshot {
         this.hotKeySnapshotDeleted = hotKeySnapshotDeleted;
         this.hotKeyWatchReconnect = hotKeyWatchReconnect;
         this.hotKeyWatchFailed = hotKeyWatchFailed;
+        this.localInvalidations = localInvalidations;
+        this.invalidationReportSucceeded = invalidationReportSucceeded;
+        this.invalidationReportFailed = invalidationReportFailed;
+        this.invalidationReceived = invalidationReceived;
+        this.invalidationSelfIgnored = invalidationSelfIgnored;
+        this.invalidationInvalid = invalidationInvalid;
+        this.invalidationWatchReconnect = invalidationWatchReconnect;
+        this.invalidationWatchFailed = invalidationWatchFailed;
     }
 
     public long getTotalGets() {
@@ -174,5 +230,37 @@ public class TmcMetricsSnapshot {
 
     public long getHotKeyWatchFailed() {
         return hotKeyWatchFailed;
+    }
+
+    public long getLocalInvalidations() {
+        return localInvalidations;
+    }
+
+    public long getInvalidationReportSucceeded() {
+        return invalidationReportSucceeded;
+    }
+
+    public long getInvalidationReportFailed() {
+        return invalidationReportFailed;
+    }
+
+    public long getInvalidationReceived() {
+        return invalidationReceived;
+    }
+
+    public long getInvalidationSelfIgnored() {
+        return invalidationSelfIgnored;
+    }
+
+    public long getInvalidationInvalid() {
+        return invalidationInvalid;
+    }
+
+    public long getInvalidationWatchReconnect() {
+        return invalidationWatchReconnect;
+    }
+
+    public long getInvalidationWatchFailed() {
+        return invalidationWatchFailed;
     }
 }

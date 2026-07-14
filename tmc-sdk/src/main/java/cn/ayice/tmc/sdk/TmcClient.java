@@ -1,6 +1,7 @@
 package cn.ayice.tmc.sdk;
 
 import cn.ayice.tmc.communication.AccessReporter;
+import cn.ayice.tmc.communication.InvalidationReporter;
 import cn.ayice.tmc.constant.TmcConstants;
 import cn.ayice.tmc.enums.CacheOperation;
 import cn.ayice.tmc.hotkey.HotKeyManager;
@@ -42,6 +43,11 @@ public class TmcClient {
      */
     private final AccessReporter accessReporter;
 
+    /**
+     * 失效事件发布器。允许为空，表示当前 SDK 只做本节点缓存删除，不广播其他节点。
+     */
+    private final InvalidationReporter invalidationReporter;
+
     public TmcClient(
             TmcProperties properties,
             HotKeyManager hotKeyManager,
@@ -58,12 +64,24 @@ public class TmcClient {
             TmcMetrics metrics,
             AccessReporter accessReporter
     ) {
+        this(properties, hotKeyManager, localCache, metrics, accessReporter, null);
+    }
+
+    public TmcClient(
+            TmcProperties properties,
+            HotKeyManager hotKeyManager,
+            CaffeineLocalCache localCache,
+            TmcMetrics metrics,
+            AccessReporter accessReporter,
+            InvalidationReporter invalidationReporter
+    ) {
         this.properties = requireNonNull(properties, "properties");
         this.properties.validate();
         this.hotKeyManager = requireNonNull(hotKeyManager, "hotKeyManager");
         this.localCache = requireNonNull(localCache, "localCache");
         this.metrics = requireNonNull(metrics, "metrics");
         this.accessReporter = accessReporter;
+        this.invalidationReporter = invalidationReporter;
     }
 
     /**
@@ -140,6 +158,26 @@ public class TmcClient {
      */
     public void invalidate(String key) {
         localCache.invalidate(key);
+        incrementSafely(metrics::incrementLocalInvalidations);
+    }
+
+    /**
+     * 写 Redis 成功后的失效入口。
+     *
+     * <p>该方法先删除当前节点本地缓存，再发布失效事件给其他节点。
+     * 广播失败不能改变 Redis 写操作已经成功的事实，因此异常只记录指标并吞掉。</p>
+     */
+    public void invalidateAfterWrite(String key, CacheOperation operation) {
+        invalidate(key);
+        if (invalidationReporter == null || !properties.getInvalidation().isEnabled()
+                || !properties.getInvalidation().isReportEnabled()) {
+            return;
+        }
+        try {
+            invalidationReporter.report(key, operation);
+        } catch (RuntimeException e) {
+            incrementSafely(metrics::incrementInvalidationReportFailed);
+        }
     }
 
     /**

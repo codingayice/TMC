@@ -41,6 +41,11 @@ class TmcPropertiesTest {
         assertEquals(5514, properties.getReport().getRsyslog().getPort());
         assertEquals(1000, properties.getReport().getRsyslog().getConnectTimeoutMillis());
         assertEquals(1000, properties.getReport().getRsyslog().getWriteTimeoutMillis());
+        assertTrue(properties.getInvalidation().isEnabled());
+        assertTrue(properties.getInvalidation().isReportEnabled());
+        assertTrue(properties.getInvalidation().isListenEnabled());
+        assertEquals(30, properties.getInvalidation().getEventTtlSeconds());
+        assertEquals(3000, properties.getInvalidation().getReconnectDelayMillis());
     }
 
     @Test
@@ -60,7 +65,12 @@ class TmcPropertiesTest {
                         "tmc.report.rsyslog.host=192.168.1.10",
                         "tmc.report.rsyslog.port=5515",
                         "tmc.report.rsyslog.connect-timeout-millis=44",
-                        "tmc.report.rsyslog.write-timeout-millis=55"
+                        "tmc.report.rsyslog.write-timeout-millis=55",
+                        "tmc.invalidation.enabled=false",
+                        "tmc.invalidation.report-enabled=false",
+                        "tmc.invalidation.listen-enabled=false",
+                        "tmc.invalidation.event-ttl-seconds=66",
+                        "tmc.invalidation.reconnect-delay-millis=77"
                 )
                 .run(context -> {
                     TmcProperties properties = context.getBean(TmcProperties.class);
@@ -76,6 +86,11 @@ class TmcPropertiesTest {
                     assertEquals(5515, properties.getReport().getRsyslog().getPort());
                     assertEquals(44, properties.getReport().getRsyslog().getConnectTimeoutMillis());
                     assertEquals(55, properties.getReport().getRsyslog().getWriteTimeoutMillis());
+                    assertEquals(false, properties.getInvalidation().isEnabled());
+                    assertEquals(false, properties.getInvalidation().isReportEnabled());
+                    assertEquals(false, properties.getInvalidation().isListenEnabled());
+                    assertEquals(66, properties.getInvalidation().getEventTtlSeconds());
+                    assertEquals(77, properties.getInvalidation().getReconnectDelayMillis());
                 });
     }
 

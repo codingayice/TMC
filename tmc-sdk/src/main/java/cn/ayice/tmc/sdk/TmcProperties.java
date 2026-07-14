@@ -2,6 +2,7 @@ package cn.ayice.tmc.sdk;
 
 import cn.ayice.tmc.communication.AccessReportProperties;
 import cn.ayice.tmc.communication.EtcdProperties;
+import cn.ayice.tmc.communication.InvalidationProperties;
 import cn.ayice.tmc.hotkey.HotKeyProperties;
 import cn.ayice.tmc.hotkey.LocalCacheProperties;
 import java.util.UUID;
@@ -50,6 +51,11 @@ public class TmcProperties {
      * etcd 通信配置。
      */
     private EtcdProperties etcd = new EtcdProperties();
+
+    /**
+     * 本地缓存失效广播配置。
+     */
+    private InvalidationProperties invalidation = new InvalidationProperties();
 
     public boolean isEnabled() {
         return enabled;
@@ -119,6 +125,17 @@ public class TmcProperties {
             throw new IllegalArgumentException("etcd must not be null");
         }
         this.etcd = etcd;
+    }
+
+    public InvalidationProperties getInvalidation() {
+        return invalidation;
+    }
+
+    public void setInvalidation(InvalidationProperties invalidation) {
+        if (invalidation == null) {
+            throw new IllegalArgumentException("invalidation must not be null");
+        }
+        this.invalidation = invalidation;
     }
 
     /**
