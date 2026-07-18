@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMC 限时抢购 Demo</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main class="page-shell">
+    <section class="hero">
+        <nav class="top-bar" aria-label="页面导航">
+            <button class="icon-button" type="button" aria-label="返回">
+                <span class="chevron-left"></span>
+            </button>
+            <strong>限时抢购</strong>
+            <div class="nav-actions">
+                <button class="icon-button share-button" type="button" aria-label="分享"></button>
+                <button class="icon-button help-button" type="button" aria-label="规则"></button>
+            </div>
+        </nav>
+
+        <div class="hero-copy">
+            <h1>限时抢购<br>手慢无！</h1>
+            <p>超值好物 | 限时限量</p>
+        </div>
+
+        <img class="hero-cart" src="/images/hero-cart.svg" alt="限时抢购购物车">
+    </section>
+
+    <section class="sale-panel" aria-label="限时抢购商品">
+        <div class="time-tabs">
+            <button class="time-tab active" type="button">
+                <strong>10:00</strong>
+                <span>抢购中</span>
+            </button>
+            <button class="time-tab" type="button">
+                <strong>12:00</strong>
+                <span>即将开始</span>
+            </button>
+            <button class="time-tab" type="button">
+                <strong>14:00</strong>
+                <span>即将开始</span>
+            </button>
+            <button class="time-tab" type="button">
+                <strong>16:00</strong>
+                <span>即将开始</span>
+            </button>
+            <button class="time-tab" type="button">
+                <strong>20:00</strong>
+                <span>即将开始</span>
+            </button>
+            <button class="all-sessions" type="button">全部场次</button>
+        </div>
+
+        <div id="productList" class="product-list" aria-live="polite"></div>
+    </section>
+
+    <section class="ops-panel" aria-label="演示操作">
+        <button id="seedButton" class="ops-button" type="button">初始化商品</button>
+        <button id="trafficButton" class="ops-button primary" type="button">制造热点访问</button>
+        <button id="refreshButton" class="ops-button" type="button">刷新指标</button>
+        <div id="statusText" class="status-text">等待操作</div>
+        <div class="metric-strip">
+            <span>总读 <strong id="totalGets">0</strong></span>
+            <span>回源 <strong id="redisGets">0</strong></span>
+            <span>命中 <strong id="localHits">0</strong></span>
+            <span>失效 <strong id="invalidations">0</strong></span>
+        </div>
+    </section>
+
+    <section class="promise-strip" aria-label="服务承诺">
+        <div>
+            <span class="badge">正</span>
+            <strong>正品保障</strong>
+            <small>100%正品 假一赔十</small>
+        </div>
+        <div>
+            <span class="badge truck">配</span>
+            <strong>极速发货</strong>
+            <small>多仓直发 闪电到货</small>
+        </div>
+        <div>
+            <span class="badge return">退</span>
+            <strong>7天无理由退货</strong>
+            <small>安心购物 售后无忧</small>
+        </div>
+    </section>
+</main>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="/app.js"></script>
+</body>
+</html>

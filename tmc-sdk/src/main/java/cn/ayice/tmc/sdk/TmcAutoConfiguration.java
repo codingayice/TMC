@@ -7,6 +7,7 @@ import cn.ayice.tmc.communication.InvalidationReporter;
 import cn.ayice.tmc.hotkey.CaffeineLocalCache;
 import cn.ayice.tmc.hotkey.HotKeyManager;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -22,7 +23,7 @@ import org.springframework.beans.factory.ObjectProvider;
  * 热点管理器、访问上报器和 {@link TmcClient}。用户自定义同类型 Bean 时，
  * {@code ConditionalOnMissingBean} 会让自定义 Bean 优先。</p>
  */
-@AutoConfiguration
+@AutoConfiguration(afterName = "org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfiguration")
 @EnableConfigurationProperties(TmcProperties.class)
 @ConditionalOnProperty(prefix = "tmc", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class TmcAutoConfiguration {
@@ -160,11 +161,11 @@ public class TmcAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnBean(MeterRegistry.class)
+    @ConditionalOnClass(MeterRegistry.class)
     public TmcClientMetricsBinder tmcClientMetricsBinder(
             TmcProperties properties,
             TmcMetrics tmcMetrics,
-            MeterRegistry meterRegistry
+            ObjectProvider<MeterRegistry> meterRegistry
     ) {
         return new TmcClientMetricsBinder(properties, tmcMetrics, meterRegistry);
     }

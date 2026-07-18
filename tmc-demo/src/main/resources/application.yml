@@ -1,3 +1,29 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: tmc-flash-sale-demo
+
+# Demo 业务 Redis 存放商品详情。读写会通过 ProductRedisGateway 包装成 TmcJedis 调用，
+# 从而进入 SDK 的访问上报、热点判断、本地缓存和写后失效链路。
+tmc:
+  app-name: ${TMC_APP_NAME:flash-sale-demo}
+  client-id: ${TMC_CLIENT_ID:flash-sale-demo-local}
+  demo:
+    redis:
+      host: ${TMC_DEMO_REDIS_HOST:127.0.0.1}
+      port: ${TMC_DEMO_REDIS_PORT:6379}
+      timeout-millis: ${TMC_DEMO_REDIS_TIMEOUT_MILLIS:2000}
+      password: ${TMC_DEMO_REDIS_PASSWORD:}
+      database: ${TMC_DEMO_REDIS_DATABASE:0}
+  report:
+    rsyslog:
+      host: ${TMC_RSYSLOG_HOST:127.0.0.1}
+      port: ${TMC_RSYSLOG_PORT:5514}
+  etcd:
+    endpoints: ${TMC_ETCD_ENDPOINTS:http://127.0.0.1:2379}
+
 # The demo application also exposes Prometheus metrics because it is the easiest
 # place to observe SDK-side behavior such as local cache hit rate and Redis
 # fallback rate. Prometheus can scrape this endpoint after the demo is deployed.
