@@ -1,0 +1,11 @@
+# The demo application also exposes Prometheus metrics because it is the easiest
+# place to observe SDK-side behavior such as local cache hit rate and Redis
+# fallback rate. Prometheus can scrape this endpoint after the demo is deployed.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    prometheus:
+      enabled: true

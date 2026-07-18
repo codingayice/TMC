@@ -6,6 +6,7 @@ import cn.ayice.tmc.communication.InvalidationListener;
 import cn.ayice.tmc.communication.InvalidationReporter;
 import cn.ayice.tmc.hotkey.CaffeineLocalCache;
 import cn.ayice.tmc.hotkey.HotKeyManager;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -149,6 +150,23 @@ public class TmcAutoConfiguration {
                 localCache,
                 tmcMetrics
         );
+    }
+
+    /**
+     * 创建 SDK Micrometer 指标绑定器。
+     *
+     * <p>SDK 本身不强制业务应用引入监控系统；只有业务应用存在 MeterRegistry 时，
+     * 才把 TmcMetrics 注册为 tmc_client_* 指标。</p>
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnBean(MeterRegistry.class)
+    public TmcClientMetricsBinder tmcClientMetricsBinder(
+            TmcProperties properties,
+            TmcMetrics tmcMetrics,
+            MeterRegistry meterRegistry
+    ) {
+        return new TmcClientMetricsBinder(properties, tmcMetrics, meterRegistry);
     }
 
     /**

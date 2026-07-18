@@ -18,3 +18,12 @@ tmc:
         - http://localhost:2379
       connect-timeout-millis: 3000
       hot-key-lease-ttl-seconds: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    prometheus:
+      enabled: true

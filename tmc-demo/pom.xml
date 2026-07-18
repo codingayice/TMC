@@ -45,6 +45,12 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- Prometheus registry, used by Grafana to observe SDK-side cache metrics in the demo app. -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
         <!-- Jedis, can be removed later if tmc-jedis shades or wraps it fully -->
         <dependency>
             <groupId>redis.clients</groupId>

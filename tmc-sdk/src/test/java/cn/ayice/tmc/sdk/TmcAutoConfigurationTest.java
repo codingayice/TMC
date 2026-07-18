@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import cn.ayice.tmc.communication.HotKeyDiscoveryListener;
 import cn.ayice.tmc.communication.InvalidationListener;
 import cn.ayice.tmc.communication.InvalidationReporter;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
@@ -85,6 +86,13 @@ class TmcAutoConfigurationTest {
                     assertNotNull(context.getBean(InvalidationReporter.class));
                     assertTrue(context.getBeansOfType(InvalidationListener.class).isEmpty());
                 });
+    }
+
+    @Test
+    void shouldCreateMetricsBinderWhenMeterRegistryExists() {
+        contextRunner
+                .withBean(SimpleMeterRegistry.class)
+                .run(context -> assertNotNull(context.getBean(TmcClientMetricsBinder.class)));
     }
 
 }

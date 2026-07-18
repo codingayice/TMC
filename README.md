@@ -100,3 +100,4 @@ mvn test
 - [Phase 7：服务端热点发现](docs/08-服务端热点发现设计.md)
 - [Phase 8：热点发布与发现监听](docs/09-热点发布与发现监听设计.md)
 - [Phase 9：本地缓存失效广播](docs/10-本地缓存失效广播设计.md)
+- [Phase 10：核心观测指标与 Grafana 看板](docs/11-核心观测指标与Grafana看板设计.md)
