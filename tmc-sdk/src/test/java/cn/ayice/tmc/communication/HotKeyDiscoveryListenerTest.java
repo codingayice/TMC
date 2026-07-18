@@ -2,12 +2,12 @@ package cn.ayice.tmc.communication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import cn.ayice.tmc.hotkey.HotKeyManager;
 import cn.ayice.tmc.model.HotKey;
 import cn.ayice.tmc.model.HotKeySnapshot;
-import cn.ayice.tmc.sdk.TmcMetrics;
 import cn.ayice.tmc.util.JsonUtils;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -23,8 +23,7 @@ class HotKeyDiscoveryListenerTest {
     @Test
     void shouldApplySnapshotJsonToHotKeyManager() {
         HotKeyManager manager = new HotKeyManager("product-service", 30_000);
-        TmcMetrics metrics = new TmcMetrics();
-        HotKeyDiscoveryListener listener = HotKeyDiscoveryListener.forTest("product-service", manager, metrics);
+        HotKeyDiscoveryListener listener = HotKeyDiscoveryListener.forTest("product-service", manager);
         String json = JsonUtils.toJson(new HotKeySnapshot(
                 "v1",
                 "product-service",
@@ -34,14 +33,12 @@ class HotKeyDiscoveryListenerTest {
         listener.applySnapshotJson(json);
 
         assertTrue(manager.isHotKey("product:1"));
-        assertEquals(1L, metrics.snapshot().getHotKeySnapshotApplied());
     }
 
     @Test
     void shouldIgnoreDuplicateSnapshotVersion() {
         HotKeyManager manager = new HotKeyManager("product-service", 30_000);
-        TmcMetrics metrics = new TmcMetrics();
-        HotKeyDiscoveryListener listener = HotKeyDiscoveryListener.forTest("product-service", manager, metrics);
+        HotKeyDiscoveryListener listener = HotKeyDiscoveryListener.forTest("product-service", manager);
         String json = JsonUtils.toJson(new HotKeySnapshot(
                 "v1",
                 "product-service",
@@ -52,14 +49,12 @@ class HotKeyDiscoveryListenerTest {
         listener.applySnapshotJson(json);
 
         assertTrue(manager.isHotKey("product:1"));
-        assertEquals(1L, metrics.snapshot().getHotKeySnapshotApplied());
     }
 
     @Test
     void shouldIgnoreSnapshotFromOtherApp() {
         HotKeyManager manager = new HotKeyManager("product-service", 30_000);
-        TmcMetrics metrics = new TmcMetrics();
-        HotKeyDiscoveryListener listener = HotKeyDiscoveryListener.forTest("product-service", manager, metrics);
+        HotKeyDiscoveryListener listener = HotKeyDiscoveryListener.forTest("product-service", manager);
         String json = JsonUtils.toJson(new HotKeySnapshot(
                 "v1",
                 "order-service",
@@ -69,30 +64,24 @@ class HotKeyDiscoveryListenerTest {
         listener.applySnapshotJson(json);
 
         assertFalse(manager.isHotKey("order:1"));
-        assertEquals(0L, metrics.snapshot().getHotKeySnapshotApplied());
     }
 
     @Test
     void shouldClearHotKeysWhenSnapshotDeleted() {
         HotKeyManager manager = new HotKeyManager("product-service", 30_000);
         manager.addHotKey(new HotKey("product-service", "product:1", 100L, System.currentTimeMillis(), 30_000L));
-        TmcMetrics metrics = new TmcMetrics();
-        HotKeyDiscoveryListener listener = HotKeyDiscoveryListener.forTest("product-service", manager, metrics);
+        HotKeyDiscoveryListener listener = HotKeyDiscoveryListener.forTest("product-service", manager);
 
         listener.handleSnapshotDeleted();
 
         assertFalse(manager.isHotKey("product:1"));
-        assertEquals(1L, metrics.snapshot().getHotKeySnapshotDeleted());
     }
 
     @Test
     void shouldRecordInvalidSnapshotJson() {
         HotKeyManager manager = new HotKeyManager("product-service", 30_000);
-        TmcMetrics metrics = new TmcMetrics();
-        HotKeyDiscoveryListener listener = HotKeyDiscoveryListener.forTest("product-service", manager, metrics);
+        HotKeyDiscoveryListener listener = HotKeyDiscoveryListener.forTest("product-service", manager);
 
-        listener.applySnapshotJson("{bad json");
-
-        assertEquals(1L, metrics.snapshot().getHotKeySnapshotInvalid());
+        assertDoesNotThrow(() -> listener.applySnapshotJson("{bad json"));
     }
 }

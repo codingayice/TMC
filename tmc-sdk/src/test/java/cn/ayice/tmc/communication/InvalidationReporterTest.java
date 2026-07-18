@@ -1,12 +1,12 @@
 package cn.ayice.tmc.communication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import cn.ayice.tmc.enums.CacheOperation;
 import cn.ayice.tmc.model.InvalidationEvent;
-import cn.ayice.tmc.sdk.TmcMetrics;
 import cn.ayice.tmc.util.EtcdKeys;
 import cn.ayice.tmc.util.JsonUtils;
 import java.util.ArrayList;
@@ -25,12 +25,10 @@ class InvalidationReporterTest {
     void shouldWriteInvalidationEventToUniquePath() {
         List<String> paths = new ArrayList<>();
         List<String> values = new ArrayList<>();
-        TmcMetrics metrics = new TmcMetrics();
         InvalidationReporter reporter = InvalidationReporter.forTest(
                 "product-service",
                 "client-1",
                 new InvalidationProperties(),
-                metrics,
                 (path, value) -> {
                     paths.add(path);
                     values.add(value);
@@ -48,42 +46,34 @@ class InvalidationReporterTest {
         assertEquals("product:1", event.getKey());
         assertEquals(CacheOperation.SET, event.getOperation());
         assertEquals("client-1", event.getClientId());
-        assertEquals(2L, metrics.snapshot().getInvalidationReportSucceeded());
     }
 
     @Test
     void shouldRecordFailureWhenWriteThrows() {
-        TmcMetrics metrics = new TmcMetrics();
         InvalidationReporter reporter = InvalidationReporter.forTest(
                 "product-service",
                 "client-1",
                 new InvalidationProperties(),
-                metrics,
                 (path, value) -> {
                     throw new IllegalStateException("etcd unavailable");
                 }
         );
 
-        reporter.report("product:1", CacheOperation.SET);
-
-        assertEquals(1L, metrics.snapshot().getInvalidationReportFailed());
+        assertDoesNotThrow(() -> reporter.report("product:1", CacheOperation.SET));
     }
 
     @Test
     void shouldRejectBlankKeyWithoutWriting() {
         List<String> paths = new ArrayList<>();
-        TmcMetrics metrics = new TmcMetrics();
         InvalidationReporter reporter = InvalidationReporter.forTest(
                 "product-service",
                 "client-1",
                 new InvalidationProperties(),
-                metrics,
                 (path, value) -> paths.add(path)
         );
 
         reporter.report(" ", CacheOperation.SET);
 
         assertTrue(paths.isEmpty());
-        assertEquals(1L, metrics.snapshot().getInvalidationReportFailed());
     }
 }

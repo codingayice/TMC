@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 /**
  * 限时抢购 Demo 业务服务。
  *
- * <p>该类刻意只表达业务语义：初始化商品、读取商品、抢购扣减、制造热点读流量。
+ * <p>该类刻意只表达业务语义：初始化商品详情、读取商品详情、模拟查看详情、制造热点读流量。
  * 它不直接依赖 Redis，也不感知 Caffeine、rsyslog、Kafka、etcd 等 TMC 基础设施；
  * 这些复杂性都被 ProductRedisGateway 和 tmc-jedis 隐藏起来。</p>
  */
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 public class FlashSaleService {
 
     /**
-     * 商品存储网关，内部通过 TmcJedis 进入透明缓存链路。
+     * 商品详情存储网关，内部通过 TmcJedis 进入透明缓存链路。
      */
     private final ProductRedisGateway gateway;
 
@@ -24,7 +24,7 @@ public class FlashSaleService {
     }
 
     /**
-     * 写入默认商品数据，方便演示环境一键恢复初始状态。
+     * 写入默认商品详情，方便演示环境一键恢复初始状态。
      */
     public List<ProductItem> seedProducts() {
         List<ProductItem> products = defaultProducts();
@@ -35,7 +35,7 @@ public class FlashSaleService {
     }
 
     /**
-     * 读取所有演示商品。每个商品都会经过 TMC 读路径。
+     * 读取所有演示商品详情。每个商品详情都会经过 TMC 读路径。
      */
     public List<ProductItem> listProducts() {
         List<ProductItem> result = new ArrayList<>();
@@ -47,24 +47,19 @@ public class FlashSaleService {
     }
 
     /**
-     * 执行一次抢购。
+     * 模拟用户点击商品卡片查看详情。
      *
-     * <p>Demo 侧使用 synchronized 保证单 JVM 演示时库存数字稳定；真实分布式库存应使用
-     * Redis Lua、数据库乐观锁或库存服务来保证并发一致性。这里的重点是写 Redis 后
-     * 触发 TMC 本地缓存失效，而不是实现完整交易系统。</p>
+     * <p>这里故意只读商品详情，不扣减库存、不写回 Redis。真实库存属于强一致数据，
+     * 应由库存服务、Redis Lua 或数据库事务单独保护，不能作为本地多级缓存对象。
+     * Demo 点击按钮只是多产生一次商品详情读取，用来观察热点发现与本地命中。</p>
      */
-    public synchronized PurchaseResult purchase(String productId) {
+    public ProductDetailViewResult viewProductDetail(String productId) {
         ProductItem product = requireProduct(productId);
-        if (product.getRemainCount() <= 0) {
-            throw new IllegalStateException("商品已售罄");
-        }
-        ProductItem updated = product.purchaseOne();
-        gateway.saveProduct(updated);
-        return new PurchaseResult(true, "抢购成功", updated);
+        return new ProductDetailViewResult(true, "已查看商品详情", product);
     }
 
     /**
-     * 连续读取同一个商品，制造热点 key 访问事件。
+     * 连续读取同一个商品详情，制造热点 key 访问事件。
      */
     public TrafficResult generateHotTraffic(String productId, int count) {
         int safeCount = Math.max(1, Math.min(count, 20_000));
@@ -93,8 +88,8 @@ public class FlashSaleService {
                         "A16芯片 | 6.1英寸 | 5G全网通",
                         4999,
                         5999,
-                        300,
-                        235,
+                        "28.6 万人看过",
+                        78,
                         "24期免息",
                         "/images/iphone.svg"
                 ),
@@ -104,8 +99,8 @@ public class FlashSaleService {
                         "S9芯片 | 健康监测 | 50米防水",
                         2399,
                         2999,
-                        200,
-                        123,
+                        "12.3 万人看过",
+                        62,
                         "12期免息",
                         "/images/watch.svg"
                 ),
@@ -115,8 +110,8 @@ public class FlashSaleService {
                         "主动降噪 | 通透模式 | 30小时续航",
                         1599,
                         1899,
-                        400,
-                        342,
+                        "34.2 万人看过",
+                        86,
                         "6期免息",
                         "/images/airpods.svg"
                 )

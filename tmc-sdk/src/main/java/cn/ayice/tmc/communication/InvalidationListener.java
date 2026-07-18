@@ -2,7 +2,6 @@ package cn.ayice.tmc.communication;
 
 import cn.ayice.tmc.hotkey.CaffeineLocalCache;
 import cn.ayice.tmc.model.InvalidationEvent;
-import cn.ayice.tmc.sdk.TmcMetrics;
 import cn.ayice.tmc.util.EtcdKeys;
 import cn.ayice.tmc.util.JsonUtils;
 import io.etcd.jetcd.ByteSequence;
@@ -47,11 +46,6 @@ public class InvalidationListener implements SmartLifecycle, AutoCloseable {
     private final CaffeineLocalCache localCache;
 
     /**
-     * SDK 指标对象。
-     */
-    private final TmcMetrics metrics;
-
-    /**
      * jetcd 客户端。
      */
     private final Client client;
@@ -76,15 +70,13 @@ public class InvalidationListener implements SmartLifecycle, AutoCloseable {
             String clientId,
             EtcdProperties etcdProperties,
             InvalidationProperties properties,
-            CaffeineLocalCache localCache,
-            TmcMetrics metrics
+            CaffeineLocalCache localCache
     ) {
         this(
                 appName,
                 clientId,
                 properties,
                 localCache,
-                metrics,
                 buildClient(etcdProperties),
                 Executors.newSingleThreadExecutor(runnable -> {
                     Thread thread = new Thread(runnable, "tmc-invalidation-listener");
@@ -99,7 +91,6 @@ public class InvalidationListener implements SmartLifecycle, AutoCloseable {
             String clientId,
             InvalidationProperties properties,
             CaffeineLocalCache localCache,
-            TmcMetrics metrics,
             Client client,
             ExecutorService executorService
     ) {
@@ -113,7 +104,6 @@ public class InvalidationListener implements SmartLifecycle, AutoCloseable {
         this.clientId = clientId;
         this.properties = properties;
         this.localCache = localCache;
-        this.metrics = metrics;
         this.client = client;
         this.executorService = executorService;
     }
@@ -124,15 +114,13 @@ public class InvalidationListener implements SmartLifecycle, AutoCloseable {
     static InvalidationListener forTest(
             String appName,
             String clientId,
-            CaffeineLocalCache localCache,
-            TmcMetrics metrics
+            CaffeineLocalCache localCache
     ) {
         return new InvalidationListener(
                 appName,
                 clientId,
                 new InvalidationProperties(),
                 localCache,
-                metrics,
                 null,
                 Executors.newSingleThreadExecutor()
         );
@@ -160,15 +148,14 @@ public class InvalidationListener implements SmartLifecycle, AutoCloseable {
                     WatchOption.builder().withPrefix(prefix).build(),
                     this::handleWatchResponse,
                     throwable -> {
-                        metrics.incrementInvalidationWatchReconnect();
                         sleepQuietly(properties.getReconnectDelayMillis());
                         if (running.get()) {
                             startWatch();
                         }
                     }
             );
-        } catch (RuntimeException e) {
-            metrics.incrementInvalidationWatchFailed();
+        } catch (RuntimeException ignored) {
+            // watch 建立失败只影响跨节点失效感知，不影响业务读写。
         }
     }
 
@@ -191,20 +178,17 @@ public class InvalidationListener implements SmartLifecycle, AutoCloseable {
         try {
             InvalidationEvent event = JsonUtils.fromJson(json, InvalidationEvent.class);
             if (!isValid(event)) {
-                metrics.incrementInvalidationInvalid();
                 return;
             }
             if (!appName.equals(event.getAppName())) {
                 return;
             }
             if (clientId.equals(event.getClientId())) {
-                metrics.incrementInvalidationSelfIgnored();
                 return;
             }
             localCache.invalidate(event.getKey());
-            metrics.incrementInvalidationReceived();
-        } catch (RuntimeException e) {
-            metrics.incrementInvalidationInvalid();
+        } catch (RuntimeException ignored) {
+            // 非法事件直接忽略，等待后续合法失效事件。
         }
     }
 

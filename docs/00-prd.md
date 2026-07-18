@@ -348,7 +348,7 @@ cn.ayice.tmc.server.config
 
 ### 8.1 客户端配置
 
-建议前缀：`tmc.client`
+建议前缀：`tmc.sdk`
 
 配置项：
 
@@ -596,7 +596,7 @@ SDK 必须保证 TMC 故障不影响业务基本读写：
 - 实现 reporter 独立线程池。
 - 实现 JSON line 编码。
 - 实现 `AccessReporter` 和 rsyslog 写入能力。
-- 增加上报成功、失败、丢弃指标。
+- 上报成功、失败、丢弃通过日志和测试验证，不进入核心指标。
 - 增加 rsyslog 本地配置示例。
 
 验收：

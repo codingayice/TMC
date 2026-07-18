@@ -1,10 +1,11 @@
 package cn.ayice.tmc.demo;
 
 /**
- * 限时抢购商品视图模型。
+ * 限时抢购商品详情视图模型。
  *
- * <p>Demo 把整个商品详情序列化成 JSON 存入 Redis 的 {@code product:{id}}。
- * 商品详情是典型读多写少数据，高频读取时最容易形成热点 key，适合展示 TMC
+ * <p>Demo 把商品详情序列化成 JSON 存入 Redis 的 {@code product-detail:{id}}。
+ * 这里刻意不保存真实库存，因为库存属于强一致、高频写数据，不应该进入本地二级缓存。
+ * 商品标题、卖点、价格、营销标签这类详情信息读多写少，更适合用来展示 TMC
  * 从访问上报、热点识别到本地缓存命中的完整链路。</p>
  */
 public class ProductItem {
@@ -25,7 +26,7 @@ public class ProductItem {
     private String description;
 
     /**
-     * 抢购价，单位元。
+     * 活动展示价，单位元。价格在真实业务中也可能变化，本 Demo 把它视为商品详情的一部分。
      */
     private int price;
 
@@ -35,14 +36,14 @@ public class ProductItem {
     private int originalPrice;
 
     /**
-     * 活动总库存。
+     * 页面展示的热度文案，例如“28.6 万人看过”。它不是实时库存，不参与一致性判断。
      */
-    private int totalStock;
+    private String heatText;
 
     /**
-     * 已售数量。抢购成功后会写回 Redis，并触发 TMC 本地缓存失效。
+     * 页面展示的热度进度条百分比，只用于 UI 呈现，不代表真实库存。
      */
-    private int soldCount;
+    private int heatPercent;
 
     /**
      * 商品促销标签，例如免息信息。
@@ -63,8 +64,8 @@ public class ProductItem {
             String description,
             int price,
             int originalPrice,
-            int totalStock,
-            int soldCount,
+            String heatText,
+            int heatPercent,
             String installmentLabel,
             String imageUrl
     ) {
@@ -73,42 +74,18 @@ public class ProductItem {
         this.description = description;
         this.price = price;
         this.originalPrice = originalPrice;
-        this.totalStock = totalStock;
-        this.soldCount = soldCount;
+        this.heatText = heatText;
+        this.heatPercent = heatPercent;
         this.installmentLabel = installmentLabel;
         this.imageUrl = imageUrl;
     }
 
-    /**
-     * 创建售出数量递增后的新对象，避免调用方原地修改旧对象造成测试难以判断。
-     */
-    public ProductItem purchaseOne() {
-        return new ProductItem(
-                id,
-                name,
-                description,
-                price,
-                originalPrice,
-                totalStock,
-                soldCount + 1,
-                installmentLabel,
-                imageUrl
-        );
-    }
-
     public String redisKey() {
-        return "product:" + id;
+        return "product-detail:" + id;
     }
 
-    public int getRemainCount() {
-        return Math.max(totalStock - soldCount, 0);
-    }
-
-    public int getProgressPercent() {
-        if (totalStock <= 0) {
-            return 0;
-        }
-        return Math.min(100, Math.round(soldCount * 100.0f / totalStock));
+    public int getHeatPercent() {
+        return Math.max(0, Math.min(100, heatPercent));
     }
 
     public String getId() {
@@ -151,20 +128,16 @@ public class ProductItem {
         this.originalPrice = originalPrice;
     }
 
-    public int getTotalStock() {
-        return totalStock;
+    public String getHeatText() {
+        return heatText;
     }
 
-    public void setTotalStock(int totalStock) {
-        this.totalStock = totalStock;
+    public void setHeatText(String heatText) {
+        this.heatText = heatText;
     }
 
-    public int getSoldCount() {
-        return soldCount;
-    }
-
-    public void setSoldCount(int soldCount) {
-        this.soldCount = soldCount;
+    public void setHeatPercent(int heatPercent) {
+        this.heatPercent = heatPercent;
     }
 
     public String getInstallmentLabel() {

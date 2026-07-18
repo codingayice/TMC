@@ -5,12 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 /**
  * SDK Micrometer 指标绑定测试。
  *
- * <p>这些测试保护简历级核心观测指标：Redis 回源、本地缓存命中、热点快照应用和写后失效。
+ * <p>这些测试保护简历级核心观测指标：Key 请求总数、本地缓存命中总数和 RT。
  * Binder 只把已有 TmcMetrics 暴露给 MeterRegistry，不参与业务读写逻辑。</p>
  */
 class TmcClientMetricsBinderTest {
@@ -25,18 +27,16 @@ class TmcClientMetricsBinderTest {
 
         new TmcClientMetricsBinder(properties, metrics, registry);
         metrics.incrementTotalGets();
-        metrics.incrementRedisGets();
         metrics.incrementLocalCacheHits();
-        metrics.incrementHotKeySnapshotApplied();
-        metrics.incrementInvalidationReceived();
+        metrics.recordReadDurationNanos(1_000_000);
 
-        assertEquals(1.0, counter(registry, "tmc.client.total.gets"), 0.001);
-        assertEquals(1.0, counter(registry, "tmc.client.redis.gets"), 0.001);
-        assertEquals(1.0, counter(registry, "tmc.client.local.cache.hits"), 0.001);
-        assertEquals(1.0, counter(registry, "tmc.client.hot.key.snapshot.applied"), 0.001);
-        assertEquals(1.0, counter(registry, "tmc.client.invalidation.received"), 0.001);
-        assertTrue(hasTag(registry, "tmc.client.total.gets", "app_name", "product-service"));
-        assertTrue(hasTag(registry, "tmc.client.total.gets", "client_id", "demo-a"));
+        assertEquals(1.0, counter(registry, "tmc.sdk.key.request"), 0.001);
+        assertEquals(1.0, counter(registry, "tmc.sdk.local.cache.hit"), 0.001);
+        assertEquals(1.0, registry.get("tmc.sdk.read.duration").functionTimer().count(), 0.001);
+        assertEquals(0.001, registry.get("tmc.sdk.read.duration").functionTimer().totalTime(java.util.concurrent.TimeUnit.SECONDS), 0.000_001);
+        assertEquals(Set.of("tmc.sdk.key.request", "tmc.sdk.local.cache.hit", "tmc.sdk.read.duration"), meterNames(registry));
+        assertTrue(hasTag(registry, "tmc.sdk.key.request", "app_name", "product-service"));
+        assertTrue(hasTag(registry, "tmc.sdk.key.request", "client_id", "demo-a"));
     }
 
     @Test
@@ -66,5 +66,11 @@ class TmcClientMetricsBinderTest {
         return registry.getMeters().stream()
                 .flatMap(meter -> meter.getId().getTags().stream())
                 .anyMatch(tag -> key.equals(tag.getKey()));
+    }
+
+    private static Set<String> meterNames(SimpleMeterRegistry registry) {
+        return registry.getMeters().stream()
+                .map(meter -> meter.getId().getName())
+                .collect(Collectors.toSet());
     }
 }

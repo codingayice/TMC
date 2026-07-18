@@ -25,7 +25,7 @@ Phase 4 已经完成业务 Redis 读请求进入 TMC 链路：
 5. reporter 后台线程批量取出事件。
 6. writer 将事件编码成 JSON line。
 7. writer 将 JSON line 写入 rsyslog。
-8. 上报失败时记录指标，不影响业务读请求。
+8. 上报失败时吞掉异常并可通过日志排查，不影响业务读请求。
 9. 单元测试覆盖事件生成、队列降级、JSON line 和 writer 行为。
 
 本阶段不实现 Kafka 消费、服务端聚合、滑动窗口探测和 etcd 热点下发。

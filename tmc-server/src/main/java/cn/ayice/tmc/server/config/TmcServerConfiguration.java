@@ -3,9 +3,7 @@ package cn.ayice.tmc.server.config;
 import cn.ayice.tmc.server.hotkey.HotKeyDetector;
 import cn.ayice.tmc.server.hotkey.HotKeyPublisher;
 import cn.ayice.tmc.server.metrics.TmcServerMetrics;
-import cn.ayice.tmc.server.metrics.TmcServerMetricsBinder;
 import io.etcd.jetcd.Client;
-import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,14 +73,6 @@ public class TmcServerConfiguration {
             ObjectProvider<Client> client
     ) {
         return new HotKeyPublisher(client.getIfAvailable(), properties, metrics);
-    }
-
-    /**
-     * 创建服务端 Micrometer 指标绑定器。
-     */
-    @Bean
-    public TmcServerMetricsBinder tmcServerMetricsBinder(TmcServerMetrics metrics, MeterRegistry meterRegistry) {
-        return new TmcServerMetricsBinder(metrics, meterRegistry);
     }
 
     /**

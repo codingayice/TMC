@@ -15,13 +15,13 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit"
+          "unit": "short"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
+        "h": 9,
+        "w": 12,
         "x": 0,
         "y": 0
       },
@@ -32,17 +32,22 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "multi"
         }
       },
       "targets": [
         {
-          "expr": "sum(rate(tmc_client_redis_gets_total[1m])) / sum(rate(tmc_client_total_gets_total[1m]))",
-          "legendFormat": "Redis 回源比例",
+          "expr": "sum(tmc_sdk_key_request_total)",
+          "legendFormat": "Key 请求总数",
           "refId": "A"
+        },
+        {
+          "expr": "sum(tmc_sdk_local_cache_hit_total)",
+          "legendFormat": "本地缓存命中总数",
+          "refId": "B"
         }
       ],
-      "title": "Redis 回源比例",
+      "title": "Key 请求总数 vs 本地缓存命中总数",
       "type": "timeseries"
     },
     {
@@ -57,9 +62,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
+        "h": 9,
+        "w": 12,
+        "x": 12,
         "y": 0
       },
       "id": 2,
@@ -74,7 +79,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(tmc_client_local_cache_hits_total[1m])) / (sum(rate(tmc_client_local_cache_hits_total[1m])) + sum(rate(tmc_client_local_cache_misses_total[1m])))",
+          "expr": "sum(rate(tmc_sdk_local_cache_hit_total[1m])) / clamp_min(sum(rate(tmc_sdk_key_request_total[1m])), 0.000001)",
           "legendFormat": "本地缓存命中率",
           "refId": "A"
         }
@@ -94,10 +99,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 0
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 9
       },
       "id": 3,
       "options": {
@@ -106,22 +111,17 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "multi"
+          "mode": "single"
         }
       },
       "targets": [
         {
-          "expr": "sum(rate(tmc_client_total_gets_total[1m]))",
-          "legendFormat": "总读 QPS",
+          "expr": "sum(rate(tmc_sdk_key_request_total[1m]))",
+          "legendFormat": "Key 请求 QPS",
           "refId": "A"
-        },
-        {
-          "expr": "sum(rate(tmc_client_redis_gets_total[1m]))",
-          "legendFormat": "Redis 回源 QPS",
-          "refId": "B"
         }
       ],
-      "title": "总读 QPS vs Redis 回源 QPS",
+      "title": "QPS",
       "type": "timeseries"
     },
     {
@@ -131,133 +131,34 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "ms"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 0,
-        "y": 8
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 9
       },
       "id": 4,
       "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "expr": "tmc_server_hot_keys_detected",
-          "legendFormat": "当前热点 key 数",
-          "refId": "A"
-        }
-      ],
-      "title": "当前热点 key 数",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 9,
-        "x": 6,
-        "y": 8
-      },
-      "id": 5,
-      "options": {
         "legend": {
           "displayMode": "list",
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "multi"
+          "mode": "single"
         }
       },
       "targets": [
         {
-          "expr": "rate(tmc_client_hot_key_snapshot_applied_total[1m])",
-          "legendFormat": "{{client_id}} 热点快照应用",
+          "expr": "1000 * sum(rate(tmc_sdk_read_duration_seconds_sum[1m])) / clamp_min(sum(rate(tmc_sdk_read_duration_seconds_count[1m])), 0.000001)",
+          "legendFormat": "平均 RT",
           "refId": "A"
-        },
-        {
-          "expr": "rate(tmc_client_local_cache_hits_total[1m])",
-          "legendFormat": "{{client_id}} 本地命中",
-          "refId": "B"
-        },
-        {
-          "expr": "rate(tmc_client_redis_gets_total[1m])",
-          "legendFormat": "{{client_id}} Redis 回源",
-          "refId": "C"
         }
       ],
-      "title": "热点发现到缓存命中趋势",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 9,
-        "x": 15,
-        "y": 8
-      },
-      "id": 6,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
-      },
-      "targets": [
-        {
-          "expr": "rate(tmc_client_local_invalidations_total[1m])",
-          "legendFormat": "{{client_id}} 本地主动失效",
-          "refId": "A"
-        },
-        {
-          "expr": "rate(tmc_client_invalidation_report_succeeded_total[1m])",
-          "legendFormat": "{{client_id}} 失效发布成功",
-          "refId": "B"
-        },
-        {
-          "expr": "rate(tmc_client_invalidation_received_total[1m])",
-          "legendFormat": "{{client_id}} 跨节点失效接收",
-          "refId": "C"
-        }
-      ],
-      "title": "写后失效链路",
+      "title": "RT",
       "type": "timeseries"
     }
   ],
@@ -276,7 +177,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "TMC 核心观测看板",
+  "title": "TMC 核心效果看板",
   "uid": "tmc-core-dashboard",
   "version": 1,
   "weekStart": ""

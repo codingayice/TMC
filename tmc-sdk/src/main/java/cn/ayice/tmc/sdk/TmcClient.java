@@ -92,51 +92,52 @@ public class TmcClient {
      */
     public String get(String key, Supplier<String> jedisGetter) {
         requireNonNull(jedisGetter, "jedisGetter");
-        incrementSafely(metrics::incrementTotalGets);
-        reportAccessEvent(key);
-
-        // 本地缓存未启用时，直接请求 Redis
-        if (!properties.getLocalCache().isEnabled()) {
-            return getFromJedis(jedisGetter);
-        }
-
-        // 非热 key 直接请求 Redis；热 key 优先读本地缓存，未命中再回源并写入本地缓存。
-        boolean hotKey;
+        long startNanos = System.nanoTime();
         try {
-            hotKey = hotKeyManager.isHotKey(key);
-        } catch (RuntimeException e) {
-            incrementSafely(metrics::incrementFallbackGets);
-            return getFromJedis(jedisGetter);
-        }
+            incrementSafely(metrics::incrementTotalGets);
+            reportAccessEvent(key);
 
-        if (!hotKey) {
-            return getFromJedis(jedisGetter);
-        }
-
-        incrementSafely(metrics::incrementHotKeyGets);
-        String localValue;
-        try {
-            localValue = localCache.getIfPresent(key);
-        } catch (RuntimeException e) {
-            incrementSafely(metrics::incrementFallbackGets);
-            return getFromJedis(jedisGetter);
-        }
-
-        if (localValue != null) {
-            incrementSafely(metrics::incrementLocalCacheHits);
-            return localValue;
-        }
-
-        incrementSafely(metrics::incrementLocalCacheMisses);
-        String jedisValue = getFromJedis(jedisGetter);
-        if (jedisValue != null) {
-            try {
-                localCache.put(key, jedisValue);
-            } catch (RuntimeException e) {
-                incrementSafely(metrics::incrementFallbackGets);
+            // 本地缓存未启用时，直接请求 Redis。
+            if (!properties.getLocalCache().isEnabled()) {
+                return getFromJedis(jedisGetter);
             }
+
+            // 非热 key 直接请求 Redis；热 key 优先读本地缓存，未命中再回源并写入本地缓存。
+            boolean hotKey;
+            try {
+                hotKey = hotKeyManager.isHotKey(key);
+            } catch (RuntimeException e) {
+                return getFromJedis(jedisGetter);
+            }
+
+            if (!hotKey) {
+                return getFromJedis(jedisGetter);
+            }
+
+            String localValue;
+            try {
+                localValue = localCache.getIfPresent(key);
+            } catch (RuntimeException e) {
+                return getFromJedis(jedisGetter);
+            }
+
+            if (localValue != null) {
+                incrementSafely(metrics::incrementLocalCacheHits);
+                return localValue;
+            }
+
+            String jedisValue = getFromJedis(jedisGetter);
+            if (jedisValue != null) {
+                try {
+                    localCache.put(key, jedisValue);
+                } catch (RuntimeException ignored) {
+                    // 本地缓存写入失败时直接返回 Redis 数据，保证业务读路径可用。
+                }
+            }
+            return jedisValue;
+        } finally {
+            recordDurationSafely(System.nanoTime() - startNanos);
         }
-        return jedisValue;
     }
 
     /**
@@ -154,11 +155,22 @@ public class TmcClient {
     }
 
     /**
+     * 清空当前 JVM 的本地热点状态和本地缓存内容。
+     *
+     * <p>该方法不会操作 Redis、Kafka 或 etcd，只影响当前 SDK 实例所在进程。
+     * Demo 页面用它把客户端恢复到“还没有热点、还没有本地缓存”的冷状态，
+     * 方便重新观察访问上报、服务端热点发现、热点快照下发和本地缓存命中的完整过程。</p>
+     */
+    public void resetLocalState() {
+        hotKeyManager.clearHotKeys();
+        localCache.invalidateAll();
+    }
+
+    /**
      * 失效本地缓存。写操作成功后调用，避免本地继续读取旧值。
      */
     public void invalidate(String key) {
         localCache.invalidate(key);
-        incrementSafely(metrics::incrementLocalInvalidations);
     }
 
     /**
@@ -175,8 +187,8 @@ public class TmcClient {
         }
         try {
             invalidationReporter.report(key, operation);
-        } catch (RuntimeException e) {
-            incrementSafely(metrics::incrementInvalidationReportFailed);
+        } catch (RuntimeException ignored) {
+            // 失效广播是写后旁路能力，失败不能影响已经完成的业务写操作。
         }
     }
 
@@ -188,10 +200,9 @@ public class TmcClient {
     }
 
     /**
-     * Redis 回源统一入口，方便统计真实 Redis get 次数。
+     * Redis 回源统一入口。
      */
     private String getFromJedis(Supplier<String> jedisGetter) {
-        incrementSafely(metrics::incrementRedisGets);
         return jedisGetter.get();
     }
 
@@ -213,8 +224,19 @@ public class TmcClient {
                     properties.getClientId(),
                     CacheOperation.GET
             ));
-        } catch (RuntimeException e) {
-            incrementSafely(() -> metrics.incrementReportFailed(1));
+        } catch (RuntimeException ignored) {
+            // 访问上报是热点探测旁路能力，失败不能影响业务读结果。
+        }
+    }
+
+    /**
+     * 安全记录 SDK get 耗时。
+     */
+    private void recordDurationSafely(long nanos) {
+        try {
+            metrics.recordReadDurationNanos(nanos);
+        } catch (RuntimeException ignored) {
+            // 指标统计异常不影响主流程。
         }
     }
 

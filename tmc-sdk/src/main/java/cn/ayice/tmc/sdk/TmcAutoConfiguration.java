@@ -67,8 +67,8 @@ public class TmcAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "tmc.report", name = "enabled", havingValue = "true", matchIfMissing = true)
-    public AccessReporter accessReporter(TmcProperties properties, TmcMetrics tmcMetrics) {
-        return new AccessReporter(properties.getReport(), tmcMetrics);
+    public AccessReporter accessReporter(TmcProperties properties) {
+        return new AccessReporter(properties.getReport());
     }
 
     /**
@@ -88,15 +88,13 @@ public class TmcAutoConfiguration {
     )
     public HotKeyDiscoveryListener hotKeyDiscoveryListener(
             TmcProperties properties,
-            HotKeyManager hotKeyManager,
-            TmcMetrics tmcMetrics
+            HotKeyManager hotKeyManager
     ) {
         return new HotKeyDiscoveryListener(
                 properties.getAppName(),
                 properties.getEtcd(),
                 properties.getHotKey().getDiscovery(),
-                hotKeyManager,
-                tmcMetrics
+                hotKeyManager
         );
     }
 
@@ -114,13 +112,12 @@ public class TmcAutoConfiguration {
             havingValue = "true",
             matchIfMissing = true
     )
-    public InvalidationReporter invalidationReporter(TmcProperties properties, TmcMetrics tmcMetrics) {
+    public InvalidationReporter invalidationReporter(TmcProperties properties) {
         return new InvalidationReporter(
                 properties.getAppName(),
                 properties.getClientId(),
                 properties.getEtcd(),
-                properties.getInvalidation(),
-                tmcMetrics
+                properties.getInvalidation()
         );
     }
 
@@ -140,16 +137,14 @@ public class TmcAutoConfiguration {
     )
     public InvalidationListener invalidationListener(
             TmcProperties properties,
-            CaffeineLocalCache localCache,
-            TmcMetrics tmcMetrics
+            CaffeineLocalCache localCache
     ) {
         return new InvalidationListener(
                 properties.getAppName(),
                 properties.getClientId(),
                 properties.getEtcd(),
                 properties.getInvalidation(),
-                localCache,
-                tmcMetrics
+                localCache
         );
     }
 
@@ -157,7 +152,7 @@ public class TmcAutoConfiguration {
      * 创建 SDK Micrometer 指标绑定器。
      *
      * <p>SDK 本身不强制业务应用引入监控系统；只有业务应用存在 MeterRegistry 时，
-     * 才把 TmcMetrics 注册为 tmc_client_* 指标。</p>
+     * 才把 TmcMetrics 注册为 tmc_sdk_* 指标。</p>
      */
     @Bean
     @ConditionalOnMissingBean

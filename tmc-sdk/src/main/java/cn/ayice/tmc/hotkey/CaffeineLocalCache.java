@@ -55,6 +55,18 @@ public class CaffeineLocalCache {
     }
 
     /**
+     * 清空当前节点的全部本地缓存。
+     *
+     * <p>该方法主要服务 Demo、运维调试和故障恢复场景：当需要从一个完全冷启动的
+     * 本地缓存状态重新验证热点发现链路时，可以一次性删除 Caffeine 中的所有值。
+     * 它只影响当前 JVM，不会删除 Redis 中的远端数据。</p>
+     */
+    public void invalidateAll() {
+        cache.invalidateAll();
+        cache.cleanUp();
+    }
+
+    /**
      * 返回 Caffeine 估算的当前缓存大小，主要用于测试和观察。
      */
     public long estimatedSize() {

@@ -1,8 +1,10 @@
 package cn.ayice.tmc.sdk;
 
 import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
+import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -76,28 +78,24 @@ public class TmcClientMetricsBinder implements SmartInitializingSingleton {
 
     /**
      * 注册 SDK 核心观测指标。
+     *
+     * <p>这里只暴露最小效果指标：Key 访问总量、本地缓存命中总量和读耗时。
+     * 本地缓存命中率、QPS、平均 RT 都在 Grafana 中通过 PromQL 计算。</p>
      */
     private void bind(MeterRegistry targetRegistry) {
-        counter(targetRegistry, "tmc.client.total.gets", "SDK get 总次数", snapshot -> snapshot.getTotalGets());
-        counter(targetRegistry, "tmc.client.hot.key.gets", "热点 key get 次数", snapshot -> snapshot.getHotKeyGets());
-        counter(targetRegistry, "tmc.client.local.cache.hits", "本地缓存命中次数", snapshot -> snapshot.getLocalCacheHits());
-        counter(targetRegistry, "tmc.client.local.cache.misses", "热点 key 本地缓存未命中次数",
-                snapshot -> snapshot.getLocalCacheMisses());
-        counter(targetRegistry, "tmc.client.redis.gets", "真实回源 Redis 次数", snapshot -> snapshot.getRedisGets());
-        counter(targetRegistry, "tmc.client.fallback.gets", "旁路异常后降级 Redis 次数",
-                snapshot -> snapshot.getFallbackGets());
-        counter(targetRegistry, "tmc.client.hot.key.snapshot.applied", "SDK 应用热点快照次数",
-                snapshot -> snapshot.getHotKeySnapshotApplied());
-        counter(targetRegistry, "tmc.client.local.invalidations", "当前节点主动删除本地缓存次数",
-                snapshot -> snapshot.getLocalInvalidations());
-        counter(targetRegistry, "tmc.client.invalidation.report.succeeded", "失效事件发布成功次数",
-                snapshot -> snapshot.getInvalidationReportSucceeded());
-        counter(targetRegistry, "tmc.client.invalidation.report.failed", "失效事件发布失败次数",
-                snapshot -> snapshot.getInvalidationReportFailed());
-        counter(targetRegistry, "tmc.client.invalidation.received", "处理其他节点失效事件次数",
-                snapshot -> snapshot.getInvalidationReceived());
-        counter(targetRegistry, "tmc.client.invalidation.self.ignored", "忽略自身失效事件次数",
-                snapshot -> snapshot.getInvalidationSelfIgnored());
+        counter(targetRegistry, "tmc.sdk.key.request", "SDK 处理的 Key 读请求总数", snapshot -> snapshot.getTotalGets());
+        counter(targetRegistry, "tmc.sdk.local.cache.hit", "热点 Key 命中本地缓存总次数",
+                snapshot -> snapshot.getLocalCacheHits());
+        FunctionTimer.builder(
+                        "tmc.sdk.read.duration",
+                        metrics,
+                        currentMetrics -> currentMetrics.snapshot().getTotalGets(),
+                        currentMetrics -> currentMetrics.snapshot().getReadDurationNanos(),
+                        TimeUnit.NANOSECONDS
+                )
+                .description("SDK get 读请求累计耗时")
+                .tags(tags)
+                .register(targetRegistry);
     }
 
     /**

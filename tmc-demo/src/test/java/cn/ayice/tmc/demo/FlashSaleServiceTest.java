@@ -1,9 +1,9 @@
 package cn.ayice.tmc.demo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,8 +13,8 @@ import org.junit.jupiter.api.Test;
 /**
  * 限时抢购 Demo 业务测试。
  *
- * <p>这些测试保护 Demo 的核心业务语义：初始化商品、通过 TMC 读取商品、
- * 抢购时写回 Redis 并触发失效，以及压测接口确实制造高频读流量。</p>
+ * <p>这些测试保护 Demo 的核心业务语义：初始化商品详情、通过 TMC 读取商品详情、
+ * 点击商品时只模拟查看详情不扣库存，以及压测接口确实制造高频读流量。</p>
  */
 class FlashSaleServiceTest {
 
@@ -32,7 +32,7 @@ class FlashSaleServiceTest {
     }
 
     @Test
-    void shouldPurchaseAndPersistUpdatedSoldCount() {
+    void shouldViewProductDetailWithoutPersistingInventoryChange() {
         ProductRedisGateway gateway = mock(ProductRedisGateway.class);
         ProductItem product = new ProductItem(
                 "1001",
@@ -40,42 +40,20 @@ class FlashSaleServiceTest {
                 "A16芯片 | 6.1英寸 | 5G全网通",
                 4999,
                 5999,
-                300,
-                235,
+                "28.6 万人看过",
+                78,
                 "24期免息",
                 "/images/iphone.svg"
         );
         when(gateway.getProduct("1001")).thenReturn(product);
         FlashSaleService service = new FlashSaleService(gateway);
 
-        PurchaseResult result = service.purchase("1001");
+        ProductDetailViewResult result = service.viewProductDetail("1001");
 
         assertEquals(true, result.isSuccess());
-        assertEquals(236, result.getProduct().getSoldCount());
-        assertEquals(64, result.getProduct().getRemainCount());
-        verify(gateway).saveProduct(result.getProduct());
-    }
-
-    @Test
-    void shouldRejectPurchaseWhenStockIsSoldOut() {
-        ProductRedisGateway gateway = mock(ProductRedisGateway.class);
-        ProductItem product = new ProductItem(
-                "1001",
-                "Apple iPhone 15 128GB",
-                "A16芯片 | 6.1英寸 | 5G全网通",
-                4999,
-                5999,
-                300,
-                300,
-                "24期免息",
-                "/images/iphone.svg"
-        );
-        when(gateway.getProduct("1001")).thenReturn(product);
-        FlashSaleService service = new FlashSaleService(gateway);
-
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> service.purchase("1001"));
-
-        assertEquals("商品已售罄", exception.getMessage());
+        assertEquals(product, result.getProduct());
+        assertEquals("已查看商品详情", result.getMessage());
+        verify(gateway, never()).saveProduct(org.mockito.Mockito.any(ProductItem.class));
     }
 
     @Test
@@ -87,8 +65,8 @@ class FlashSaleServiceTest {
                 "A16芯片 | 6.1英寸 | 5G全网通",
                 4999,
                 5999,
-                300,
-                235,
+                "28.6 万人看过",
+                78,
                 "24期免息",
                 "/images/iphone.svg"
         );

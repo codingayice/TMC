@@ -1,11 +1,9 @@
 package cn.ayice.tmc.communication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import cn.ayice.tmc.enums.CacheOperation;
 import cn.ayice.tmc.model.AccessEvent;
-import cn.ayice.tmc.sdk.TmcMetrics;
 import cn.ayice.tmc.util.JsonUtils;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -27,8 +25,7 @@ class AccessReporterTest {
     void shouldWriteAccessEventToRsyslogAsJsonLine() throws Exception {
         try (ServerSocket serverSocket = new ServerSocket(0)) {
             CompletableFuture<String> received = CompletableFuture.supplyAsync(() -> readOneLine(serverSocket));
-            TmcMetrics metrics = new TmcMetrics();
-            AccessReporter reporter = new AccessReporter(properties(serverSocket.getLocalPort(), 10), metrics);
+            AccessReporter reporter = new AccessReporter(properties(serverSocket.getLocalPort(), 10));
 
             reporter.report(event("product:1"));
 
@@ -39,25 +36,21 @@ class AccessReporterTest {
             assertEquals("product:1", decoded.getKey());
             assertEquals("client-1", decoded.getClientId());
             assertEquals(CacheOperation.GET, decoded.getOperation());
-            assertEquals(1, metrics.snapshot().getReportQueued());
-            assertEquals(1, metrics.snapshot().getReportSucceeded());
         }
     }
 
     @Test
     void shouldDropAccessEventWhenQueueIsFull() {
-        TmcMetrics metrics = new TmcMetrics();
         AccessReportProperties properties = properties(9, 1);
         properties.setQueueCapacity(1);
         properties.getRsyslog().setConnectTimeoutMillis(1);
-        AccessReporter reporter = new AccessReporter(properties, metrics);
+        AccessReporter reporter = new AccessReporter(properties);
 
         for (int i = 0; i < 1000; i++) {
             reporter.report(event("product:" + i));
         }
 
         reporter.close();
-        assertTrue(metrics.snapshot().getReportDropped() > 0);
     }
 
     private static AccessReportProperties properties(int port, int flushIntervalMillis) {

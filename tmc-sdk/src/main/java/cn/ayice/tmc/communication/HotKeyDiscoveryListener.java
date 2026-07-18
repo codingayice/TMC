@@ -2,7 +2,6 @@ package cn.ayice.tmc.communication;
 
 import cn.ayice.tmc.hotkey.HotKeyManager;
 import cn.ayice.tmc.model.HotKeySnapshot;
-import cn.ayice.tmc.sdk.TmcMetrics;
 import cn.ayice.tmc.util.EtcdKeys;
 import cn.ayice.tmc.util.JsonUtils;
 import io.etcd.jetcd.ByteSequence;
@@ -48,11 +47,6 @@ public class HotKeyDiscoveryListener implements SmartLifecycle, AutoCloseable {
     private final HotKeyManager hotKeyManager;
 
     /**
-     * SDK 指标，所有异常都通过指标暴露，不向业务读线程传播。
-     */
-    private final TmcMetrics metrics;
-
-    /**
      * jetcd 客户端，生产环境用于读取和 watch etcd。
      */
     private final Client client;
@@ -81,15 +75,13 @@ public class HotKeyDiscoveryListener implements SmartLifecycle, AutoCloseable {
             String appName,
             EtcdProperties etcdProperties,
             HotKeyDiscoveryProperties discoveryProperties,
-            HotKeyManager hotKeyManager,
-            TmcMetrics metrics
+            HotKeyManager hotKeyManager
     ) {
         this(
                 appName,
                 etcdProperties,
                 discoveryProperties,
                 hotKeyManager,
-                metrics,
                 buildClient(etcdProperties),
                 Executors.newSingleThreadExecutor(runnable -> {
                     Thread thread = new Thread(runnable, "tmc-hotkey-discovery");
@@ -104,7 +96,6 @@ public class HotKeyDiscoveryListener implements SmartLifecycle, AutoCloseable {
             EtcdProperties etcdProperties,
             HotKeyDiscoveryProperties discoveryProperties,
             HotKeyManager hotKeyManager,
-            TmcMetrics metrics,
             Client client,
             ExecutorService executorService
     ) {
@@ -115,7 +106,6 @@ public class HotKeyDiscoveryListener implements SmartLifecycle, AutoCloseable {
         this.etcdProperties = etcdProperties;
         this.discoveryProperties = discoveryProperties;
         this.hotKeyManager = hotKeyManager;
-        this.metrics = metrics;
         this.client = client;
         this.executorService = executorService;
     }
@@ -125,13 +115,12 @@ public class HotKeyDiscoveryListener implements SmartLifecycle, AutoCloseable {
      *
      * <p>测试只验证快照应用逻辑，不连接真实 etcd，因此 client 可以为空。</p>
      */
-    static HotKeyDiscoveryListener forTest(String appName, HotKeyManager hotKeyManager, TmcMetrics metrics) {
+    static HotKeyDiscoveryListener forTest(String appName, HotKeyManager hotKeyManager) {
         return new HotKeyDiscoveryListener(
                 appName,
                 new EtcdProperties(),
                 new HotKeyDiscoveryProperties(),
                 hotKeyManager,
-                metrics,
                 null,
                 Executors.newSingleThreadExecutor()
         );
@@ -165,8 +154,8 @@ public class HotKeyDiscoveryListener implements SmartLifecycle, AutoCloseable {
             if (!kvs.isEmpty()) {
                 applySnapshotJson(kvs.get(0).getValue().toString(StandardCharsets.UTF_8));
             }
-        } catch (Exception e) {
-            metrics.incrementHotKeyWatchFailed();
+        } catch (Exception ignored) {
+            // 启动读取失败只会延迟热点感知，业务读路径继续回 Redis。
         }
     }
 
@@ -182,15 +171,14 @@ public class HotKeyDiscoveryListener implements SmartLifecycle, AutoCloseable {
                     byteSequence(EtcdKeys.hotKeysPath(appName)),
                     this::handleWatchResponse,
                     throwable -> {
-                        metrics.incrementHotKeyWatchReconnect();
                         sleepQuietly(discoveryProperties.getReconnectDelayMillis());
                         if (running.get()) {
                             startWatch();
                         }
                     }
             );
-        } catch (RuntimeException e) {
-            metrics.incrementHotKeyWatchFailed();
+        } catch (RuntimeException ignored) {
+            // watch 建立失败只影响热点感知速度，不能影响业务读请求。
         }
     }
 
@@ -221,9 +209,8 @@ public class HotKeyDiscoveryListener implements SmartLifecycle, AutoCloseable {
             }
             hotKeyManager.updateHotKeySnapshot(snapshot);
             lastVersion = snapshot.getVersion();
-            metrics.incrementHotKeySnapshotApplied();
-        } catch (RuntimeException e) {
-            metrics.incrementHotKeySnapshotInvalid();
+        } catch (RuntimeException ignored) {
+            // 非法快照直接忽略，等待下一次服务端发布正确快照。
         }
     }
 
@@ -233,7 +220,6 @@ public class HotKeyDiscoveryListener implements SmartLifecycle, AutoCloseable {
     void handleSnapshotDeleted() {
         hotKeyManager.clearHotKeys();
         lastVersion = null;
-        metrics.incrementHotKeySnapshotDeleted();
     }
 
     @Override

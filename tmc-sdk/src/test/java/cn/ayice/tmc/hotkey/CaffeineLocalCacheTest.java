@@ -33,6 +33,19 @@ class CaffeineLocalCacheTest {
     }
 
     @Test
+    void shouldInvalidateAllValues() {
+        CaffeineLocalCache cache = new CaffeineLocalCache(100, 30_000);
+        cache.put("product:1", "value-1");
+        cache.put("product:2", "value-2");
+
+        cache.invalidateAll();
+
+        assertNull(cache.getIfPresent("product:1"));
+        assertNull(cache.getIfPresent("product:2"));
+        assertEquals(0, cache.estimatedSize());
+    }
+
+    @Test
     void shouldNotCacheNullValue() {
         CaffeineLocalCache cache = new CaffeineLocalCache(100, 30_000);
 

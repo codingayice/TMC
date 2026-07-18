@@ -1,23 +1,26 @@
+server:
+  port: ${SERVER_PORT:8080}
+
 tmc:
   server:
     kafka:
-      bootstrap-servers: localhost:9092
-      topic: tmc-access-events
-      group-id: tmc-hotkey-server
-      concurrency: 1
+      bootstrap-servers: ${TMC_SERVER_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      topic: ${TMC_SERVER_KAFKA_TOPIC:tmc-access-events}
+      group-id: ${TMC_SERVER_KAFKA_GROUP_ID:tmc-hotkey-server}
+      concurrency: ${TMC_SERVER_KAFKA_CONCURRENCY:1}
     hot-key:
-      window-seconds: 30
-      bucket-seconds: 3
-      threshold: 100
-      top-n: 100
-      ttl-millis: 300000
-      mapping-interval-millis: 3000
+      window-seconds: ${TMC_SERVER_HOT_KEY_WINDOW_SECONDS:30}
+      bucket-seconds: ${TMC_SERVER_HOT_KEY_BUCKET_SECONDS:3}
+      threshold: ${TMC_SERVER_HOT_KEY_THRESHOLD:100}
+      top-n: ${TMC_SERVER_HOT_KEY_TOP_N:100}
+      ttl-millis: ${TMC_SERVER_HOT_KEY_TTL_MILLIS:300000}
+      mapping-interval-millis: ${TMC_SERVER_HOT_KEY_MAPPING_INTERVAL_MILLIS:3000}
     etcd:
-      enabled: true
+      enabled: ${TMC_SERVER_ETCD_ENABLED:true}
       endpoints:
-        - http://localhost:2379
-      connect-timeout-millis: 3000
-      hot-key-lease-ttl-seconds: 30
+        - ${TMC_SERVER_ETCD_ENDPOINT:http://localhost:2379}
+      connect-timeout-millis: ${TMC_SERVER_ETCD_CONNECT_TIMEOUT_MILLIS:3000}
+      hot-key-lease-ttl-seconds: ${TMC_SERVER_ETCD_HOT_KEY_LEASE_TTL_SECONDS:30}
 
 management:
   endpoints:

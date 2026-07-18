@@ -26,7 +26,7 @@ TmcJedis
 | 模块 | 职责 |
 |---|---|
 | `tmc-common` | 公共模型、常量、协议定义和通用工具。 |
-| `tmc-sdk` | 客户端热点 key 管理、本地缓存、访问事件上报、etcd 监听、失效处理和指标统计。 |
+| `tmc-sdk` | 客户端热点 key 管理、本地缓存、访问事件上报、etcd 监听、失效处理和核心效果指标统计。 |
 | `tmc-jedis` | Jedis 风格接入层，将 Redis 读写操作接入 TMC 链路。 |
 | `tmc-server` | Kafka 访问事件消费、滑动窗口热点探测和 etcd 热点结果发布。 |
 | `tmc-demo` | 演示应用，用于验证直连 Redis 与 TMC 访问链路。 |

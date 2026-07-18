@@ -2,11 +2,11 @@ package cn.ayice.tmc.communication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import cn.ayice.tmc.enums.CacheOperation;
 import cn.ayice.tmc.hotkey.CaffeineLocalCache;
 import cn.ayice.tmc.model.InvalidationEvent;
-import cn.ayice.tmc.sdk.TmcMetrics;
 import cn.ayice.tmc.util.JsonUtils;
 import org.junit.jupiter.api.Test;
 
@@ -22,50 +22,41 @@ class InvalidationListenerTest {
     void shouldInvalidateLocalCacheForOtherClientEvent() {
         CaffeineLocalCache localCache = new CaffeineLocalCache(100, 30_000);
         localCache.put("product:1", "old-value");
-        TmcMetrics metrics = new TmcMetrics();
-        InvalidationListener listener = InvalidationListener.forTest("product-service", "client-a", localCache, metrics);
+        InvalidationListener listener = InvalidationListener.forTest("product-service", "client-a", localCache);
 
         listener.applyEventJson(eventJson("product-service", "product:1", "client-b"));
 
         assertNull(localCache.getIfPresent("product:1"));
-        assertEquals(1L, metrics.snapshot().getInvalidationReceived());
     }
 
     @Test
     void shouldIgnoreSelfEvent() {
         CaffeineLocalCache localCache = new CaffeineLocalCache(100, 30_000);
         localCache.put("product:1", "old-value");
-        TmcMetrics metrics = new TmcMetrics();
-        InvalidationListener listener = InvalidationListener.forTest("product-service", "client-a", localCache, metrics);
+        InvalidationListener listener = InvalidationListener.forTest("product-service", "client-a", localCache);
 
         listener.applyEventJson(eventJson("product-service", "product:1", "client-a"));
 
         assertEquals("old-value", localCache.getIfPresent("product:1"));
-        assertEquals(1L, metrics.snapshot().getInvalidationSelfIgnored());
     }
 
     @Test
     void shouldIgnoreOtherAppEvent() {
         CaffeineLocalCache localCache = new CaffeineLocalCache(100, 30_000);
         localCache.put("product:1", "old-value");
-        TmcMetrics metrics = new TmcMetrics();
-        InvalidationListener listener = InvalidationListener.forTest("product-service", "client-a", localCache, metrics);
+        InvalidationListener listener = InvalidationListener.forTest("product-service", "client-a", localCache);
 
         listener.applyEventJson(eventJson("order-service", "product:1", "client-b"));
 
         assertEquals("old-value", localCache.getIfPresent("product:1"));
-        assertEquals(0L, metrics.snapshot().getInvalidationReceived());
     }
 
     @Test
     void shouldRecordInvalidJson() {
         CaffeineLocalCache localCache = new CaffeineLocalCache(100, 30_000);
-        TmcMetrics metrics = new TmcMetrics();
-        InvalidationListener listener = InvalidationListener.forTest("product-service", "client-a", localCache, metrics);
+        InvalidationListener listener = InvalidationListener.forTest("product-service", "client-a", localCache);
 
-        listener.applyEventJson("{bad json");
-
-        assertEquals(1L, metrics.snapshot().getInvalidationInvalid());
+        assertDoesNotThrow(() -> listener.applyEventJson("{bad json"));
     }
 
     private static String eventJson(String appName, String key, String clientId) {

@@ -329,7 +329,7 @@ button {
     font-size: 19px;
 }
 
-.stock-row {
+.detail-row {
     display: flex;
     justify-content: space-between;
     width: min(100%, 510px);
@@ -414,7 +414,7 @@ button {
 
 .ops-panel {
     display: grid;
-    grid-template-columns: repeat(3, minmax(110px, 1fr));
+    grid-template-columns: repeat(4, minmax(110px, 1fr));
     gap: 12px;
     margin: 18px 22px 0;
     padding: 18px;
@@ -437,6 +437,12 @@ button {
     color: #fff;
     border-color: transparent;
     background: linear-gradient(135deg, var(--rush-red), var(--sunset-orange));
+}
+
+.ops-button.danger {
+    color: #9c1b1f;
+    border-color: #f4a3a6;
+    background: #fff5f5;
 }
 
 .status-text,
@@ -634,7 +640,7 @@ button {
         font-size: 13px;
     }
 
-    .stock-row {
+    .detail-row {
         font-size: 13px;
     }
 

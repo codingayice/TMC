@@ -2,12 +2,13 @@ const productList = document.querySelector("#productList");
 const seedButton = document.querySelector("#seedButton");
 const trafficButton = document.querySelector("#trafficButton");
 const refreshButton = document.querySelector("#refreshButton");
+const resetLocalButton = document.querySelector("#resetLocalButton");
 const statusText = document.querySelector("#statusText");
 const toast = document.querySelector("#toast");
 
 /**
  * 当前页面选中的热点商品。Demo 默认用 iPhone 商品制造热点访问，
- * 这样 Grafana 中的 tmc_client_* 指标更容易快速出现变化。
+ * 这样 Grafana 中的 tmc_sdk_* 指标更容易快速出现变化。
  */
 let selectedProductId = "1001";
 
@@ -44,6 +45,13 @@ function bindActions() {
         await loadMetrics();
         showToast("已刷新");
     });
+
+    resetLocalButton.addEventListener("click", async () => {
+        const result = await postJson("/api/flash-sale/tmc/local-state/reset");
+        statusText.textContent = "本节点已恢复到冷缓存状态";
+        showToast(result.message);
+        await loadMetrics();
+    });
 }
 
 /**
@@ -56,16 +64,15 @@ async function loadProducts() {
         return;
     }
     productList.innerHTML = products.map(renderProduct).join("");
-    productList.querySelectorAll("[data-buy]").forEach(button => {
-        button.addEventListener("click", () => purchase(button.dataset.buy));
+    productList.querySelectorAll("[data-view]").forEach(button => {
+        button.addEventListener("click", () => viewProductDetail(button.dataset.view));
     });
 }
 
 /**
- * 渲染单个抢购商品。
+ * 渲染单个抢购商品详情卡片。
  */
 function renderProduct(product) {
-    const disabled = product.remainCount <= 0 ? "disabled" : "";
     return `
         <article class="product-card">
             <div class="image-box">
@@ -74,12 +81,12 @@ function renderProduct(product) {
             <div class="product-copy">
                 <h2 class="product-name"><span class="limit-tag">限量</span>${product.name}</h2>
                 <p class="product-desc">${product.description}</p>
-                <div class="stock-row">
-                    <span>已抢 ${product.soldCount} 件</span>
-                    <span>仅剩 ${product.remainCount} 件</span>
+                <div class="detail-row">
+                    <span>${product.heatText}</span>
+                    <span>详情热度 ${product.heatPercent}%</span>
                 </div>
-                <div class="progress" aria-label="售卖进度 ${product.progressPercent}%">
-                    <span style="width: ${product.progressPercent}%"></span>
+                <div class="progress" aria-label="详情热度 ${product.heatPercent}%">
+                    <span style="width: ${product.heatPercent}%"></span>
                 </div>
                 <div class="tag-row">
                     <span>${product.installmentLabel}</span>
@@ -88,21 +95,20 @@ function renderProduct(product) {
             </div>
             <div class="price-action">
                 <div class="price"><small>￥</small>${product.price}<del>￥${product.originalPrice}</del></div>
-                <button class="buy-button" type="button" data-buy="${product.id}" ${disabled}>立即抢购</button>
+                <button class="buy-button" type="button" data-view="${product.id}">查看详情</button>
             </div>
         </article>
     `;
 }
 
 /**
- * 执行抢购写操作。后端写 Redis 成功后，TmcJedis 会通知 SDK 失效本地缓存。
+ * 模拟点击商品卡片查看详情。后端只读取商品详情，不扣减库存，也不写回 Redis。
  */
-async function purchase(productId) {
+async function viewProductDetail(productId) {
     selectedProductId = productId;
     try {
-        const result = await postJson(`/api/flash-sale/products/${productId}/purchase`);
+        const result = await postJson(`/api/flash-sale/products/${productId}/detail-view`);
         showToast(result.message);
-        await loadProducts();
         await loadMetrics();
     } catch (error) {
         showToast(error.message);

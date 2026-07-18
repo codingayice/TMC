@@ -7,7 +7,8 @@ import org.junit.jupiter.api.Test;
 /**
  * TmcMetrics 指标测试。
  *
- * <p>保障 SDK 读路径和访问事件上报相关计数能被正确累计并形成快照。</p>
+ * <p>保障 SDK 只保留能直观看出 TMC 效果的最小指标：Key 访问总数、
+ * 本地缓存命中总数和读请求总耗时。命中率、QPS 和 RT 都由 Grafana 基于这些值计算。</p>
  */
 class TmcMetricsTest {
 
@@ -16,28 +17,8 @@ class TmcMetricsTest {
         TmcMetricsSnapshot snapshot = new TmcMetrics().snapshot();
 
         assertEquals(0, snapshot.getTotalGets());
-        assertEquals(0, snapshot.getHotKeyGets());
         assertEquals(0, snapshot.getLocalCacheHits());
-        assertEquals(0, snapshot.getLocalCacheMisses());
-        assertEquals(0, snapshot.getRedisGets());
-        assertEquals(0, snapshot.getFallbackGets());
-        assertEquals(0, snapshot.getReportQueued());
-        assertEquals(0, snapshot.getReportDropped());
-        assertEquals(0, snapshot.getReportSucceeded());
-        assertEquals(0, snapshot.getReportFailed());
-        assertEquals(0, snapshot.getHotKeySnapshotApplied());
-        assertEquals(0, snapshot.getHotKeySnapshotInvalid());
-        assertEquals(0, snapshot.getHotKeySnapshotDeleted());
-        assertEquals(0, snapshot.getHotKeyWatchReconnect());
-        assertEquals(0, snapshot.getHotKeyWatchFailed());
-        assertEquals(0, snapshot.getLocalInvalidations());
-        assertEquals(0, snapshot.getInvalidationReportSucceeded());
-        assertEquals(0, snapshot.getInvalidationReportFailed());
-        assertEquals(0, snapshot.getInvalidationReceived());
-        assertEquals(0, snapshot.getInvalidationSelfIgnored());
-        assertEquals(0, snapshot.getInvalidationInvalid());
-        assertEquals(0, snapshot.getInvalidationWatchReconnect());
-        assertEquals(0, snapshot.getInvalidationWatchFailed());
+        assertEquals(0, snapshot.getReadDurationNanos());
     }
 
     @Test
@@ -45,52 +26,12 @@ class TmcMetricsTest {
         TmcMetrics metrics = new TmcMetrics();
 
         metrics.incrementTotalGets();
-        metrics.incrementHotKeyGets();
         metrics.incrementLocalCacheHits();
-        metrics.incrementLocalCacheMisses();
-        metrics.incrementRedisGets();
-        metrics.incrementFallbackGets();
-        metrics.incrementReportQueued();
-        metrics.incrementReportDropped();
-        metrics.incrementReportSucceeded(2);
-        metrics.incrementReportFailed(3);
-        metrics.incrementHotKeySnapshotApplied();
-        metrics.incrementHotKeySnapshotInvalid();
-        metrics.incrementHotKeySnapshotDeleted();
-        metrics.incrementHotKeyWatchReconnect();
-        metrics.incrementHotKeyWatchFailed();
-        metrics.incrementLocalInvalidations();
-        metrics.incrementInvalidationReportSucceeded();
-        metrics.incrementInvalidationReportFailed();
-        metrics.incrementInvalidationReceived();
-        metrics.incrementInvalidationSelfIgnored();
-        metrics.incrementInvalidationInvalid();
-        metrics.incrementInvalidationWatchReconnect();
-        metrics.incrementInvalidationWatchFailed();
+        metrics.recordReadDurationNanos(123);
 
         TmcMetricsSnapshot snapshot = metrics.snapshot();
         assertEquals(1, snapshot.getTotalGets());
-        assertEquals(1, snapshot.getHotKeyGets());
         assertEquals(1, snapshot.getLocalCacheHits());
-        assertEquals(1, snapshot.getLocalCacheMisses());
-        assertEquals(1, snapshot.getRedisGets());
-        assertEquals(1, snapshot.getFallbackGets());
-        assertEquals(1, snapshot.getReportQueued());
-        assertEquals(1, snapshot.getReportDropped());
-        assertEquals(2, snapshot.getReportSucceeded());
-        assertEquals(3, snapshot.getReportFailed());
-        assertEquals(1, snapshot.getHotKeySnapshotApplied());
-        assertEquals(1, snapshot.getHotKeySnapshotInvalid());
-        assertEquals(1, snapshot.getHotKeySnapshotDeleted());
-        assertEquals(1, snapshot.getHotKeyWatchReconnect());
-        assertEquals(1, snapshot.getHotKeyWatchFailed());
-        assertEquals(1, snapshot.getLocalInvalidations());
-        assertEquals(1, snapshot.getInvalidationReportSucceeded());
-        assertEquals(1, snapshot.getInvalidationReportFailed());
-        assertEquals(1, snapshot.getInvalidationReceived());
-        assertEquals(1, snapshot.getInvalidationSelfIgnored());
-        assertEquals(1, snapshot.getInvalidationInvalid());
-        assertEquals(1, snapshot.getInvalidationWatchReconnect());
-        assertEquals(1, snapshot.getInvalidationWatchFailed());
+        assertEquals(123, snapshot.getReadDurationNanos());
     }
 }

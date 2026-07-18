@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import cn.ayice.tmc.hotkey.CaffeineLocalCache;
 import cn.ayice.tmc.hotkey.HotKeyManager;
@@ -23,7 +24,8 @@ import org.junit.jupiter.api.Test;
 /**
  * TmcClient 读路径测试。
  *
- * <p>这些测试覆盖热点判断、本地缓存命中/未命中、Redis 回源、降级和访问事件上报。</p>
+ * <p>这些测试覆盖热点判断、本地缓存命中/未命中、Redis 回源、降级和访问事件上报。
+ * 指标断言只关注核心效果指标，内部通信动作不进入主观测指标。</p>
  */
 class TmcClientTest {
 
@@ -37,7 +39,7 @@ class TmcClientTest {
         assertEquals("jedis-value", value);
         assertEquals(1, jedis.count());
         assertEquals(1, client.metrics().getTotalGets());
-        assertEquals(1, client.metrics().getRedisGets());
+        assertTrue(client.metrics().getReadDurationNanos() > 0);
     }
 
     @Test
@@ -51,7 +53,6 @@ class TmcClientTest {
 
         assertEquals(1, jedis.count());
         assertEquals(1, client.metrics().getLocalCacheHits());
-        assertEquals(1, client.metrics().getLocalCacheMisses());
     }
 
     @Test
@@ -94,7 +95,22 @@ class TmcClientTest {
 
         assertEquals(2, jedis.count());
         assertEquals(1, client.metrics().getLocalCacheHits());
-        assertEquals(2, client.metrics().getLocalCacheMisses());
+    }
+
+    @Test
+    void shouldResetLocalHotKeysAndCache() {
+        CountingJedisReader jedis = new CountingJedisReader(Map.of("product:1", "jedis-value"));
+        TmcClient client = newClient();
+        client.addHotKey(new HotKey("product-service", "product:1", 100L, System.currentTimeMillis(), 30_000L));
+        client.get("product:1", () -> jedis.get("product:1"));
+        client.get("product:1", () -> jedis.get("product:1"));
+
+        client.resetLocalState();
+        client.get("product:1", () -> jedis.get("product:1"));
+        client.get("product:1", () -> jedis.get("product:1"));
+
+        assertEquals(3, jedis.count());
+        assertEquals(1, client.metrics().getLocalCacheHits());
     }
 
     @Test
@@ -123,7 +139,7 @@ class TmcClientTest {
         TmcClient client = newClient(properties(), new ThrowingAccessReporter());
 
         assertEquals("value", client.get("product:1", () -> "value"));
-        assertEquals(1, client.metrics().getReportFailed());
+        assertEquals(1, client.metrics().getTotalGets());
     }
 
     @Test
@@ -146,7 +162,7 @@ class TmcClientTest {
 
         client.invalidateAfterWrite("product:1", CacheOperation.SET);
 
-        assertEquals(1, client.metrics().getInvalidationReportFailed());
+        assertEquals(0, client.metrics().getLocalCacheHits());
     }
 
     private static TmcClient newClient() {
@@ -214,7 +230,7 @@ class TmcClientTest {
         private AccessEvent event;
 
         private CapturingAccessReporter() {
-            super(disabledReportProperties(), new TmcMetrics());
+            super(disabledReportProperties());
             close();
         }
 
@@ -226,7 +242,7 @@ class TmcClientTest {
 
     private static final class ThrowingAccessReporter extends AccessReporter {
         private ThrowingAccessReporter() {
-            super(disabledReportProperties(), new TmcMetrics());
+            super(disabledReportProperties());
             close();
         }
 
@@ -241,7 +257,7 @@ class TmcClientTest {
         private CacheOperation operation;
 
         private CountingInvalidationReporter() {
-            super("product-service", "client-1", new InvalidationProperties(), new TmcMetrics());
+            super("product-service", "client-1", new InvalidationProperties());
         }
 
         @Override
@@ -253,7 +269,7 @@ class TmcClientTest {
 
     private static final class ThrowingInvalidationReporter extends InvalidationReporter {
         private ThrowingInvalidationReporter() {
-            super("product-service", "client-1", new InvalidationProperties(), new TmcMetrics());
+            super("product-service", "client-1", new InvalidationProperties());
         }
 
         @Override

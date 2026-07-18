@@ -5,8 +5,9 @@ spring:
   application:
     name: tmc-flash-sale-demo
 
-# Demo 业务 Redis 存放商品详情。读写会通过 ProductRedisGateway 包装成 TmcJedis 调用，
-# 从而进入 SDK 的访问上报、热点判断、本地缓存和写后失效链路。
+# Demo 业务 Redis 只存放商品详情。读写会通过 ProductRedisGateway 包装成 TmcJedis 调用，
+# 从而进入 SDK 的访问上报、热点判断、本地缓存和写后失效链路。库存这类强一致数据不放入
+# TMC 本地缓存，真实业务应交给独立库存链路处理。
 tmc:
   app-name: ${TMC_APP_NAME:flash-sale-demo}
   client-id: ${TMC_CLIENT_ID:flash-sale-demo-local}

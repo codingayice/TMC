@@ -2,7 +2,6 @@ package cn.ayice.tmc.communication;
 
 import cn.ayice.tmc.enums.CacheOperation;
 import cn.ayice.tmc.model.InvalidationEvent;
-import cn.ayice.tmc.sdk.TmcMetrics;
 import cn.ayice.tmc.util.EtcdKeys;
 import cn.ayice.tmc.util.JsonUtils;
 import io.etcd.jetcd.ByteSequence;
@@ -37,11 +36,6 @@ public class InvalidationReporter implements AutoCloseable {
     private final InvalidationProperties properties;
 
     /**
-     * SDK 指标对象。
-     */
-    private final TmcMetrics metrics;
-
-    /**
      * jetcd 客户端，生产环境用于写入失效事件。
      */
     private final Client client;
@@ -55,10 +49,9 @@ public class InvalidationReporter implements AutoCloseable {
             String appName,
             String clientId,
             EtcdProperties etcdProperties,
-            InvalidationProperties properties,
-            TmcMetrics metrics
+            InvalidationProperties properties
     ) {
-        this(appName, clientId, properties, metrics, buildClient(etcdProperties), null);
+        this(appName, clientId, properties, buildClient(etcdProperties), null);
     }
 
     /**
@@ -67,17 +60,15 @@ public class InvalidationReporter implements AutoCloseable {
     protected InvalidationReporter(
             String appName,
             String clientId,
-            InvalidationProperties properties,
-            TmcMetrics metrics
+            InvalidationProperties properties
     ) {
-        this(appName, clientId, properties, metrics, null, null);
+        this(appName, clientId, properties, null, null);
     }
 
     private InvalidationReporter(
             String appName,
             String clientId,
             InvalidationProperties properties,
-            TmcMetrics metrics,
             Client client,
             BiConsumer<String, String> testPutAction
     ) {
@@ -90,7 +81,6 @@ public class InvalidationReporter implements AutoCloseable {
         this.appName = appName;
         this.clientId = clientId;
         this.properties = properties;
-        this.metrics = metrics;
         this.client = client;
         this.testPutAction = testPutAction;
     }
@@ -102,10 +92,9 @@ public class InvalidationReporter implements AutoCloseable {
             String appName,
             String clientId,
             InvalidationProperties properties,
-            TmcMetrics metrics,
             BiConsumer<String, String> putAction
     ) {
-        return new InvalidationReporter(appName, clientId, properties, metrics, null, putAction);
+        return new InvalidationReporter(appName, clientId, properties, null, putAction);
     }
 
     /**
@@ -132,9 +121,8 @@ public class InvalidationReporter implements AutoCloseable {
                     eventId
             );
             put(EtcdKeys.invalidationEventPath(appName, eventId), JsonUtils.toJson(event));
-            metrics.incrementInvalidationReportSucceeded();
-        } catch (RuntimeException e) {
-            metrics.incrementInvalidationReportFailed();
+        } catch (RuntimeException ignored) {
+            // 失效事件发布失败属于写后旁路失败，不向业务写路径传播。
         }
     }
 

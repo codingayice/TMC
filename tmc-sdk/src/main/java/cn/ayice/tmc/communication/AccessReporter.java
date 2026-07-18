@@ -1,7 +1,6 @@
 package cn.ayice.tmc.communication;
 
 import cn.ayice.tmc.model.AccessEvent;
-import cn.ayice.tmc.sdk.TmcMetrics;
 import cn.ayice.tmc.util.JsonUtils;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -31,11 +30,6 @@ public class AccessReporter {
     private final AccessReportProperties properties;
 
     /**
-     * SDK 指标对象，用于记录 queued/dropped/succeeded/failed。
-     */
-    private final TmcMetrics metrics;
-
-    /**
      * 有界队列。rsyslog 不可用或写入变慢时，队列满会丢弃事件而不是拖慢业务线程。
      */
     private final BlockingQueue<AccessEvent> queue;
@@ -60,15 +54,11 @@ public class AccessReporter {
      */
     private BufferedWriter writer;
 
-    public AccessReporter(AccessReportProperties properties, TmcMetrics metrics) {
+    public AccessReporter(AccessReportProperties properties) {
         if (properties == null) {
             throw new IllegalArgumentException("properties must not be null");
         }
-        if (metrics == null) {
-            throw new IllegalArgumentException("metrics must not be null");
-        }
         this.properties = properties;
-        this.metrics = metrics;
         this.queue = new ArrayBlockingQueue<>(properties.getQueueCapacity());
         this.worker = new Thread(this::runWorker, "tmc-access-reporter");
         this.worker.setDaemon(true);
@@ -87,13 +77,9 @@ public class AccessReporter {
             return;
         }
         try {
-            if (queue.offer(event)) {
-                incrementSafely(metrics::incrementReportQueued);
-            } else {
-                incrementSafely(metrics::incrementReportDropped);
-            }
-        } catch (RuntimeException e) {
-            incrementSafely(metrics::incrementReportDropped);
+            queue.offer(event);
+        } catch (RuntimeException ignored) {
+            // 上报队列异常属于旁路失败，业务读路径不感知。
         }
     }
 
@@ -125,9 +111,7 @@ public class AccessReporter {
             }
             try {
                 writeBatch(batch);
-                incrementSafely(() -> metrics.incrementReportSucceeded(batch.size()));
-            } catch (RuntimeException e) {
-                incrementSafely(() -> metrics.incrementReportFailed(batch.size()));
+            } catch (RuntimeException ignored) {
                 closeSocket();
             }
         }
@@ -229,16 +213,4 @@ public class AccessReporter {
         }
     }
 
-    /**
-     * 安全更新指标。
-     *
-     * <p>指标异常不应该影响访问事件上报，更不能影响业务读路径。</p>
-     */
-    private static void incrementSafely(Runnable increment) {
-        try {
-            increment.run();
-        } catch (RuntimeException ignored) {
-            // Metrics must never affect the business read path.
-        }
-    }
 }
