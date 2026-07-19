@@ -126,15 +126,10 @@ public class TmcClient {
                 return localValue;
             }
 
-            String jedisValue = getFromJedis(jedisGetter);
-            if (jedisValue != null) {
-                try {
-                    localCache.put(key, jedisValue);
-                } catch (RuntimeException ignored) {
-                    // 本地缓存写入失败时直接返回 Redis 数据，保证业务读路径可用。
-                }
-            }
-            return jedisValue;
+            // 热点 key 首次进入本地缓存时使用 Caffeine 的原子加载能力。
+            // 同一个 key 并发 miss 时，Caffeine 只会让一个线程执行 Redis 回源，
+            // 其他线程等待并复用结果，从而避免热点冷填充阶段把 Redis 打穿。
+            return localCache.get(key, ignored -> getFromJedis(jedisGetter));
         } finally {
             recordDurationSafely(System.nanoTime() - startNanos);
         }

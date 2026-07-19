@@ -116,8 +116,8 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(tmc_sdk_key_request_total[1m]))",
-          "legendFormat": "Key 请求 QPS",
+          "expr": "sum(rate(http_server_requests_seconds_count{method=\"POST\",uri=\"/api/flash-sale/products/{productId}/detail-view\"}[1m]))",
+          "legendFormat": "QPS",
           "refId": "A"
         }
       ],
@@ -153,7 +153,7 @@
       },
       "targets": [
         {
-          "expr": "1000 * sum(rate(tmc_sdk_read_duration_seconds_sum[1m])) / clamp_min(sum(rate(tmc_sdk_read_duration_seconds_count[1m])), 0.000001)",
+          "expr": "1000 * sum(rate(http_server_requests_seconds_sum{method=\"POST\",uri=\"/api/flash-sale/products/{productId}/detail-view\"}[1m])) / clamp_min(sum(rate(http_server_requests_seconds_count{method=\"POST\",uri=\"/api/flash-sale/products/{productId}/detail-view\"}[1m])), 0.000001)",
           "legendFormat": "平均 RT",
           "refId": "A"
         }

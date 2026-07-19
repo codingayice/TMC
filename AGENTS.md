@@ -34,6 +34,12 @@ Code comment rule:
 - Test classes should include comments describing the behavior being protected, especially when the test documents a design decision or edge case.
 - When adding or changing code, update nearby comments so they remain accurate.
 
+Open source hygiene rule:
+
+- This repository is intended to be open source. Do not commit real server IPs, account names, passwords, tokens, private keys, personal phone numbers, private email addresses, machine-specific absolute paths, or other environment-specific secrets.
+- Use placeholders such as `<demo-host>`, `<kafka-host>`, `<settings.xml>`, or environment variables in documentation and configuration examples.
+- Deployment credentials and real host mappings must stay in local shell history, private notes, CI/CD secrets, or server-side files that are not committed to the repository.
+
 <!-- CODEGRAPH_START -->
 ## CodeGraph
 

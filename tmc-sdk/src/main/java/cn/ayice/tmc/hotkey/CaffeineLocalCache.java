@@ -3,6 +3,7 @@ package cn.ayice.tmc.hotkey;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;
+import java.util.function.Function;
 
 /**
  * Caffeine 本地缓存封装。
@@ -35,6 +36,21 @@ public class CaffeineLocalCache {
      */
     public String getIfPresent(String key) {
         return cache.getIfPresent(key);
+    }
+
+    /**
+     * 读取本地缓存，未命中时由 Caffeine 原子执行加载函数。
+     *
+     * <p>这是热点 key 防击穿的关键入口：当同一个 key 在高并发下同时 miss 时，
+     * Caffeine 会保证同一时刻只有一个线程执行 {@code loader}，其他线程等待并复用
+     * 这次加载结果。对于 TMC 来说，{@code loader} 通常就是 Redis 回源读取，因此该方法
+     * 可以把同 key 的并发 Redis 请求合并成一次。</p>
+     *
+     * <p>如果 {@code loader} 返回 {@code null}，Caffeine 不会缓存该值，后续请求仍会重新回源。
+     * 这符合 Redis key 不存在时的语义，避免把空值长期固化在本地缓存中。</p>
+     */
+    public String get(String key, Function<String, String> loader) {
+        return cache.get(key, loader);
     }
 
     /**

@@ -31,6 +31,7 @@ TmcJedis
 | `tmc-server` | Kafka 访问事件消费、滑动窗口热点探测和 etcd 热点结果发布。 |
 | `tmc-demo` | 演示应用，用于验证直连 Redis 与 TMC 访问链路。 |
 | `tmc-benchmark` | 压测模块，用于验证 Redis 压力、本地命中率、延迟和失效行为。 |
+| `infra` | rsyslog、Kafka、etcd、Prometheus、Grafana、Nginx 等部署配置。 |
 
 ## 本地环境
 
@@ -39,6 +40,8 @@ TmcJedis
 - Docker
 - Docker Compose
 - Windows 环境建议使用 PowerShell 7+
+
+线上 Demo 可以通过 Nginx 提供统一入口，例如 `http://<demo-host>/`，内部负载均衡到两个 Demo 实例。
 
 ## 启动基础设施
 

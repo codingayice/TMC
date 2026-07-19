@@ -16,8 +16,15 @@ import cn.ayice.tmc.communication.InvalidationReporter;
 import cn.ayice.tmc.enums.CacheOperation;
 import cn.ayice.tmc.model.HotKey;
 import cn.ayice.tmc.model.AccessEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
@@ -65,6 +72,39 @@ class TmcClientTest {
 
         assertNull(client.get("product:1", () -> jedis.get("product:1")));
         assertEquals(2, jedis.count());
+    }
+
+    @Test
+    void shouldCoalesceConcurrentRemoteLoadsForHotKeyCacheMiss() throws Exception {
+        int threadCount = 16;
+        TmcClient client = newClient();
+        client.addHotKey(new HotKey("product-service", "product:1", 100L, System.currentTimeMillis(), 30_000L));
+        AtomicInteger remoteLoads = new AtomicInteger();
+        CountDownLatch ready = new CountDownLatch(threadCount);
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        List<Future<String>> futures = new ArrayList<>();
+
+        for (int i = 0; i < threadCount; i++) {
+            futures.add(executor.submit(() -> {
+                ready.countDown();
+                assertTrue(start.await(1, TimeUnit.SECONDS));
+                return client.get("product:1", () -> {
+                    remoteLoads.incrementAndGet();
+                    sleepQuietly(100);
+                    return "jedis-value";
+                });
+            }));
+        }
+
+        assertTrue(ready.await(1, TimeUnit.SECONDS));
+        start.countDown();
+        for (Future<String> future : futures) {
+            assertEquals("jedis-value", future.get(1, TimeUnit.SECONDS));
+        }
+        executor.shutdown();
+        assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+        assertEquals(1, remoteLoads.get());
     }
 
     @Test
@@ -223,6 +263,15 @@ class TmcClientTest {
 
         private int count() {
             return count.get();
+        }
+    }
+
+    private static void sleepQuietly(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("test thread interrupted", e);
         }
     }
 
